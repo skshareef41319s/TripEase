@@ -4,26 +4,6 @@
 
 ---
 
-## 🚧 Project Status
-
-> **Note:** This project is still in development. Many features are in progress and improvements are ongoing to enhance both UI/UX and functionality.
-
----
-
-## 📁 Features (Planned and Implemented)
-
-- ✅ Add new destinations with images and details  
-- ✅ Display destinations in stylish cards  
-- ✅ Glassmorphic sticky navbar  
-- ✅ Responsive layout with mobile support  
-- 🛠️ User authentication (in progress)  
-- 🛠️ Image upload via Cloudinary (upcoming)  
-- 🛠️ Filtering/sorting destinations (planned)  
-- 🛠️ Reviews and ratings (planned)  
-- 🛠️ Dashboard and user profiles (planned)  
-
----
-
 ## 💻 Tech Stack
 
 - **Frontend:** EJS, HTML5, CSS3 (custom + Bootstrap), JavaScript  
