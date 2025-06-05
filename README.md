@@ -38,18 +38,19 @@
 
 TripEase/
 │
-├── init/ # Entry point files (index.js, data.js)
-├── models/ # Mongoose schemas
-├── routes/ # Express routes
-├── views/ # EJS templates
-│ ├── listings/
-│ ├── includes/
-│ └── layouts/
+├── init/                 # Entry point files (index.js, data.js)
+├── models/               # Mongoose schemas
+├── routes/               # Express routes
+├── views/                # EJS templates
+│   ├── listings/
+│   ├── includes/
+│   └── layouts/
 ├── public/
-│ └── styles.css # Global CSS
-├── app.js # Main server file
+│   └── styles.css        # Global CSS
+├── app.js                # Main server file
 ├── package.json
 └── README.md
+
 
 
 ---
