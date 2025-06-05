@@ -1,0 +1,132 @@
+<% layout("/layouts/boilerplate") %>
+
+<body>
+  <div class="container">
+    <h1 class="main-title">👤 Your Profile</h1>
+
+    <div class="profile-card">
+      <h2><%= user.name || "User Name" %></h2>
+      <p>Email: <%= user.email || "user@example.com" %></p>
+
+      <section class="destinations-section">
+        <h3>Your Destinations 📍</h3>
+        <% if (user.listings && user.listings.length > 0) { %>
+          <ul class="destinations-list">
+            <% user.listings.forEach(destination => { %>
+              <li>
+                <a href="/listings/<%= destination._id %>" class="destination-link" title="View <%= destination.title %>">
+                  <strong><%= destination.title %></strong> — <%= destination.location %>, <%= destination.country %>
+                </a>
+              </li>
+            <% }) %>
+          </ul>
+        <% } else { %>
+          <p class="empty-msg">You don't have any destinations yet.</p>
+        <% } %>
+      </section>
+    </div>
+  </div>
+
+  <style>
+    /* Container & Typography */
+    .container {
+      max-width: 600px;
+      margin: 3rem auto;
+      padding: 0 1rem;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #333;
+      background: #f7f9fc;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    }
+    .main-title {
+      text-align: center;
+      margin-bottom: 2rem;
+      font-weight: 700;
+      color: #0056b3;
+      font-size: 2.4rem;
+      user-select: none;
+    }
+
+    /* Profile Card */
+    .profile-card {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem 2.5rem;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      transition: box-shadow 0.3s ease;
+    }
+    .profile-card:hover {
+      box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    }
+    .profile-card h2 {
+      margin-bottom: 0.5rem;
+      font-size: 2rem;
+      color: #222;
+    }
+    .profile-card p {
+      margin-bottom: 2rem;
+      color: #555;
+      font-size: 1.1rem;
+      letter-spacing: 0.02em;
+    }
+
+    /* Destinations Section */
+    .destinations-section h3 {
+      margin-bottom: 1rem;
+      color: #0056b3;
+      border-bottom: 2px solid #0056b3;
+      padding-bottom: 0.4rem;
+      font-size: 1.6rem;
+      user-select: none;
+    }
+    .destinations-list {
+      list-style: none;
+      padding-left: 0;
+      max-height: 220px;
+      overflow-y: auto;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 1rem;
+      background: #f9f9f9;
+      font-size: 1.05rem;
+      transition: background-color 0.3s ease;
+    }
+    .destinations-list li {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #e1e1e1;
+    }
+    .destinations-list li:last-child {
+      border-bottom: none;
+    }
+
+    /* Destination Link */
+    .destination-link {
+      color: #007bff;
+      text-decoration: none;
+      display: inline-block;
+      width: 100%;
+      transition: color 0.2s ease, transform 0.2s ease;
+      padding: 4px 6px;
+      border-radius: 6px;
+    }
+    .destination-link:hover,
+    .destination-link:focus {
+      color: #004085;
+      background-color: #e2e6ea;
+      transform: translateX(4px);
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* Empty Message */
+    .empty-msg {
+      text-align: center;
+      font-size: 1.15rem;
+      color: #777;
+      font-style: italic;
+      padding: 1rem 0;
+      user-select: none;
+    }
+  </style>
+</body>

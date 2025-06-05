@@ -1,0 +1,316 @@
+<% layout("/layouts/boilerplate") %>
+
+<body>
+  <div class="container">
+    <h1 class="main-title">🌍 All Destinations</h1>
+
+    <div class="btn-group">
+      <a href="/listings/new" class="btn"> Create Your Destination</a>
+    </div>
+
+    <% if (allListings.length > 0) { %>
+    <div class="card-grid">
+      <% allListings.forEach((listing) => { %>
+      <div class="card">
+        <button class="like-btn" aria-label="Like">
+          <svg
+            class="heart-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path
+              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 
+                  5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 
+                  5.5 0 0 0 0-7.78z"
+            ></path>
+          </svg>
+        </button>
+        <img
+          src="<%= listing.image.url %>"
+          alt="<%= listing.title %>"
+          class="card-image"
+        />
+        <div class="card-content">
+          <h2 class="card-title"><%= listing.title %></h2>
+          <a href="/listings/<%= listing._id %>" class="btn btn-small"
+            >View Details</a
+          >
+        </div>
+      </div>
+      <% }); %>
+    </div>
+    <% } else { %>
+    <p class="no-entries">No entries available at the moment.</p>
+    <% } %>
+  </div>
+
+  <!-- Scroll to Top Button -->
+  <button id="scrollTopBtn" title="Go to top" aria-label="Go to top">
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      fill="none"
+      stroke="white"
+      stroke-width="3"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      viewBox="0 0 24 24"
+    >
+      <polyline points="18 15 12 9 6 15" />
+    </svg>
+  </button>
+
+  <style>
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f9f9f9;
+      color: #333;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    .main-title {
+      text-align: center;
+      font-weight: 700;
+      font-size: 2.8rem;
+      margin-bottom: 1.5rem;
+      color: #2c3e50;
+      padding-top: 1rem;
+    }
+
+    .btn-group {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .btn {
+      background-color: #007bff;
+      color: white;
+      padding: 0.7rem 1.8rem;
+      border: none;
+      border-radius: 25px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: background-color 0.3s ease;
+    }
+
+    .btn:hover {
+      background-color: #0056b3;
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3rem; /* Increased gap for more space */
+    }
+
+    @media (max-width: 992px) {
+      .card-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .card-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: white;
+      border-radius: 14px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.12);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      min-height: 350px;
+    }
+
+    .card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18);
+    }
+
+    .card-image {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+      display: block;
+    }
+
+    .card-content {
+      padding: 1.3rem 1.5rem;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .card-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 1.2rem;
+      color: #2c3e50;
+    }
+
+    .btn-small {
+      background-color: #28a745;
+      color: white;
+      font-weight: 600;
+      border-radius: 22px;
+      padding: 0.5rem 1.2rem;
+      text-align: center;
+      font-size: 1.1rem;
+      transition: background-color 0.3s ease;
+      text-decoration: none;
+      align-self: flex-start;
+      cursor: pointer;
+    }
+
+    .btn-small:hover {
+      background-color: #1e7e34;
+    }
+
+    .no-entries {
+      text-align: center;
+      font-size: 1.3rem;
+      color: #777;
+      margin-top: 3rem;
+    }
+
+    /* Heart like button */
+    .like-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s ease;
+      color: #aaa;
+      z-index: 10;
+    }
+
+    .like-btn:hover {
+      transform: scale(1.2);
+      color: #ff4d6d;
+    }
+
+    .like-btn.liked {
+      color: #ff4d6d;
+    }
+
+    .heart-icon {
+      width: 24px;
+      height: 24px;
+      stroke-width: 2;
+      fill: none;
+      transition: fill 0.3s ease, stroke 0.3s ease;
+    }
+
+    .like-btn.liked .heart-icon {
+      fill: #ff4d6d;
+      stroke: #ff4d6d;
+    }
+
+    /* Scroll to top button modern style */
+    #scrollTopBtn {
+      position: fixed;
+      bottom: 40px;
+      right: 40px;
+      z-index: 100;
+      background: linear-gradient(135deg, #4a90e2, #357abd);
+      border: none;
+      outline: none;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: none; /* hidden initially */
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 6px 12px rgba(53, 122, 189, 0.5);
+      transition: background 0.3s ease, transform 0.3s ease;
+      animation: pulse 3s infinite;
+    }
+
+    #scrollTopBtn:hover {
+      background: linear-gradient(135deg, #357abd, #4a90e2);
+      transform: scale(1.1);
+      box-shadow: 0 8px 16px rgba(53, 122, 189, 0.7);
+    }
+
+    /* Pulse animation */
+    @keyframes pulse {
+      0%,
+      100% {
+        box-shadow: 0 6px 12px rgba(53, 122, 189, 0.5);
+      }
+      50% {
+        box-shadow: 0 10px 20px rgba(53, 122, 189, 0.7);
+      }
+    }
+  </style>
+
+  <script>
+    // Toggle like button fill on click
+    document.querySelectorAll(".like-btn").forEach((button) => {
+      button.addEventListener("click", () => {
+        button.classList.toggle("liked");
+      });
+    });
+
+    // Scroll to top button
+    const scrollTopBtn = document.getElementById("scrollTopBtn");
+
+    // Show button when user scrolls down 300px
+    window.addEventListener("scroll", () => {
+      if (window.scrollY > 300) {
+        scrollTopBtn.style.display = "flex";
+      } else {
+        scrollTopBtn.style.display = "none";
+      }
+    });
+
+    // Smooth scroll to top when button clicked
+    scrollTopBtn.addEventListener("click", () => {
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    });
+
+    // Alert when user click once on heart icon says "Added to favorites", second click says "Removed from favorites"
+    document.querySelectorAll(".like-btn").forEach((button) => {
+      button.addEventListener("click", () => {
+        if (button.classList.contains("liked")) {
+          alert("Added to favorites");
+        } else {
+          alert("Removed from favorites");
+        }
+      });
+    });
+  </script>
+</body>

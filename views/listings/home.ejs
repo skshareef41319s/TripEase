@@ -1,0 +1,154 @@
+<% layout("/layouts/boilerplate") %>
+<body>
+  <section class="hero-section">
+    <div class="hero-content">
+      <h1>Welcome to TripEase 🌍</h1>
+      <p class="tagline">Discover. Plan. Explore.</p>
+      <p class="subtitle">Your gateway to incredible travel experiences worldwide.</p>
+      
+      <div class="hero-buttons">
+        <a href="/listings" class="btn btn-primary">Discover Destinations</a>
+        <a href="/listings/new" class="btn btn-secondary">Add Your Favorite Spot</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Floating card with elegant animation -->
+  <section class="floating-card-section">
+    <div class="card">
+      <h2>Explore Stunning Destinations</h2>
+      <p>Discover handpicked travel spots tailored just for you. Start your journey now and unlock unforgettable experiences.</p>
+      <a href="/listings" class="btn btn-primary">Start Your Journey</a>
+    </div>
+  </section>
+</body>
+
+<style>
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: #f1f4f9;
+    margin: 0;
+    padding: 0;
+  }
+
+  .hero-section {
+  min-height: 80vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #457b9d, #1d3557);
+  color: white;
+  text-align: center;
+  padding: 2rem;
+  border-radius: 2rem;
+  margin: 1rem;
+}
+
+
+  .hero-content h1 {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .tagline {
+    font-weight: 600;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    letter-spacing: 1.2px;
+  }
+
+  .subtitle {
+    font-weight: 300;
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+    opacity: 0.85;
+  }
+
+  .hero-buttons .btn {
+    font-weight: 600;
+    padding: 0.75rem 2rem;
+    border-radius: 2rem;
+    font-size: 1.1rem;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    margin: 0 0.5rem;
+    text-decoration: none;
+  }
+
+  .btn-primary {
+    background-color: #a8dadc; /* soft teal */
+    color: #1d3557; /* deep navy */
+    border: none;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  .btn-primary:hover {
+    background-color: #1d3557; /* deep navy */
+    color: #a8dadc; /* soft teal */
+  }
+
+  .btn-secondary {
+    background-color: transparent;
+    border: 2px solid #a8dadc; /* soft teal */
+    color: #a8dadc;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  .btn-secondary:hover {
+    background-color: #a8dadc;
+    color: #1d3557;
+  }
+
+  /* Floating Card Section */
+  .floating-card-section {
+    display: flex;
+    justify-content: center;
+    padding: 3rem 1rem 6rem; /* bottom padding for breathing room */
+    background: #f1f4f9;
+  }
+
+  .card {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 8px 20px rgba(29, 53, 87, 0.15);
+    padding: 2.5rem 3rem;
+    max-width: 420px;
+    text-align: center;
+    animation: float 6s ease-in-out infinite;
+    transition: transform 0.5s ease, box-shadow 0.5s ease;
+  }
+
+  .card h2 {
+    color: #1d3557;
+    margin-bottom: 1rem;
+    font-weight: 700;
+    font-size: 1.8rem;
+  }
+
+  .card p {
+    color: #457b9d;
+    font-weight: 400;
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+    line-height: 1.5;
+  }
+
+  /* Floating animation */
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0);
+      box-shadow: 0 8px 20px rgba(29, 53, 87, 0.15);
+    }
+    50% {
+      transform: translateY(-15px);
+      box-shadow: 0 16px 30px rgba(29, 53, 87, 0.25);
+    }
+  }
+
+  .card:hover {
+    transform: translateY(-10px) scale(1.05);
+    box-shadow: 0 20px 40px rgba(29, 53, 87, 0.35);
+  }
+</style>

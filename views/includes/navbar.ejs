@@ -1,0 +1,46 @@
+<nav class="glass-navbar" aria-label="Primary Navigation">
+  <div class="nav-inner">
+    <a class="nav-brand" href="/">
+      <i data-feather="airplane"></i> TripEase
+    </a>
+
+    <!-- Search Bar -->
+    <form class="nav-search" role="search" action="/listings" method="GET">
+      <input 
+        type="search" 
+        name="q" 
+        placeholder="Search destinations..." 
+        aria-label="Search destinations"
+      />
+      <button type="submit" aria-label="Search">
+        <i data-feather="search"></i>
+      </button>
+    </form>
+
+    <ul class="nav-links">
+      <li><a href="/"><i data-feather="home"></i> Home</a></li>
+      <li><a href="/listings"><i data-feather="map"></i> Destinations</a></li>
+      <li><a href="/listings/new"><i data-feather="plus-circle"></i> Add</a></li>
+    </ul>
+
+    <!-- User Profile Icon -->
+    <a href="/profile" class="nav-profile" aria-label="User Profile">
+      <i data-feather="user"></i>
+    </a>
+  </div>
+</nav>
+
+<!-- Add this script at the bottom of your layout.ejs, before </body> -->
+<script src="https://unpkg.com/feather-icons"></script>
+<script>
+  feather.replace();
+
+  // Highlight search input if it has a value
+  document.addEventListener("DOMContentLoaded", function() {
+    const searchInput = document.querySelector('.nav-search input[name="q"]');
+    if (searchInput.value) {
+      searchInput.classList.add("highlight");
+    }
+  });
+
+</script>
