@@ -67,9 +67,6 @@ TripEase/
 Contributions are welcome!  
 To contribute, please fork the repository, create a new branch, and submit a pull request. For major changes, open an issue first to discuss what you would like to change.
 
-## License
-
-This project is licensed under the [MIT License](LICENSE).
 
 ## Contact
 
