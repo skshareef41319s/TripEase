@@ -1,6 +1,8 @@
 <% layout("/layouts/boilerplate") %>
+
 <body>
   <div class="container">
+    <!-- Listing Detail Card -->
     <div class="card detail-card">
       <img src="<%= listing.image.url %>" alt="Destination Image" class="card-image" />
       <div class="card-content">
@@ -11,21 +13,81 @@
       </div>
     </div>
 
+    <!-- Action Buttons -->
     <div class="action-buttons mt-4 d-flex flex-wrap gap-3 justify-content-center">
       <a href="/listings/<%= listing._id %>/edit" class="btn btn-primary px-4">Edit</a>
 
-      <form action="/listings/<%= listing._id %>?_method=DELETE" method="POST" class="form-css">
+      <form action="/listings/<%= listing._id %>?_method=DELETE" method="POST" class="form-css delete-listing-form">
         <button type="submit" class="btn btn-danger px-4 d-flex align-items-center justify-content-center">
           <i class="bi bi-trash"></i> Delete
         </button>
       </form>
 
       <button class="btn btn-book px-4">Book</button>
-
       <a href="/listings" class="btn btn-outline-secondary px-4">Back to Destinations</a>
+    </div>
+
+    <!-- Review Toggle Button -->
+    <div class="text-center my-4">
+      <button id="toggleReviewsBtn" class="btn btn-secondary">Reviews</button>
+    </div>
+
+    <!-- Review Modal -->
+    <div id="reviewModal" class="review-modal">
+      <div class="review-modal-content">
+        <span class="close-btn" id="closeReviewModal">&times;</span>
+
+        <h3>Leave a Review</h3>
+        <form action="/listings/<%= listing._id %>/reviews" method="POST" class="review-form">
+          <div class="form-group">
+            <label for="reviewText">Your Comment</label>
+            <textarea id="reviewText" name="review[comment]" placeholder="Share your experience..." required></textarea>
+          </div>
+          <div class="form-group rating-group">
+            <label>Your Rating</label>
+            <div class="star-rating">
+              <% for(let i = 5; i >= 1; i--) { %>
+                <input type="radio" id="star-<%= i %>" name="review[rating]" value="<%= i %>" required />
+                <label for="star-<%= i %>">&#9733;</label>
+              <% } %>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary">Submit Review</button>
+        </form>
+
+        <% if(listing.reviews && listing.reviews.length > 0) { %>
+          <div class="reviews-list mt-4">
+            <h4>What others are saying</h4>
+            <% listing.reviews.forEach(review => { %>
+              <div class="review-card">
+                <p class="review-comment">"<%= review.comment %>"</p>
+                <div class="review-rating">
+                  <% for(let i = 1; i <= 5; i++) { %>
+                    <% if(i <= review.rating) { %>
+                      <span class="star filled">&#9733;</span>
+                    <% } else { %>
+                      <span class="star">&#9734;</span>
+                    <% } %>
+                  <% } %>
+                </div>
+                <form action="/listings/<%= listing._id %>/reviews/<%= review._id %>?_method=DELETE" method="POST" class="delete-review-form">
+                  <button type="submit" class="btn btn-danger btn-sm mt-2">Delete Review</button>
+                </form>
+              </div>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
     </div>
   </div>
 
+
+
+
+
+
+
+<!-- Styling -->
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -176,27 +238,208 @@
         font-size: 1rem;
       }
     }
-  </style>
-  <script>
-    document.addEventListener("DOMContentLoaded", function() {
-      const bookButton = document.querySelector(".btn-book");
-      bookButton.addEventListener("click", function() {
-        alert("Booking functionality coming soon!");
-      });
-    });
-  </script>
-  <script src="https://unpkg.com/feather-icons"></script>
-  <script>
-    feather.replace();
 
-    // Ask the user for confirmation before deleting
-    const deleteForms = document.querySelectorAll('form[action*="/listings/"][method="POST"]');
-    deleteForms.forEach(form => {
-      form.addEventListener("submit", function(event) {
-        if (!confirm("Are you sure you want to delete this listing? This action cannot be undone.")) {
-          event.preventDefault();
+    .review-section {
+  margin-top: 3rem;
+  padding: 2rem;
+  background-color: var(--card-bg, #fff);
+  border-radius: 5px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.review-section h3,
+.reviews-list h4 {
+  margin-bottom: 1rem;
+  color: var(--text-color, #222);
+}
+
+.review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.form-group label {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  display: inline-block;
+}
+
+.review-form textarea {
+  width: 100%;
+  border-radius: 10px;
+  padding: 1rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  resize: vertical;
+  background: var(--bg-color, #f9f9f9);
+  color: var(--text-color, #333);
+  transition: border 0.3s;
+}
+
+.review-form textarea:focus {
+  border-color: var(--accent, #007BFF);
+  outline: none;
+}
+
+.rating-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.star-rating {
+  display: flex;
+  flex-direction: row-reverse;
+  justify-content: flex-start;
+  gap: 0.3rem;
+}
+
+.star-rating input[type="radio"] {
+  display: none;
+}
+
+.star-rating label {
+  font-size: 2rem;
+  color: #ccc;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.star-rating input[type="radio"]:checked ~ label,
+.star-rating label:hover,
+.star-rating label:hover ~ label {
+  color: gold;
+}
+
+/* Review List */
+.reviews-list {
+    margin-top: 2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .review-card {
+    background-color: #fff;
+    padding: 1rem 1.2rem;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    width: calc(50% - 0.5rem);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: transform 0.2s ease;
+  }
+
+  .review-card:hover {
+    transform: translateY(-3px);
+  }
+
+  .review-comment {
+    font-size: 0.85rem;
+    font-style: italic;
+    color: #333;
+    margin-bottom: 0.5rem;
+  }
+
+  .review-rating .star {
+    font-size: 1rem;
+    color: #bbb;
+  }
+
+  .review-rating .filled {
+    color: gold;
+  }
+
+  .btn-sm {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+  }
+
+  @media (max-width: 768px) {
+    .review-card {
+      width: 100%;
+    }
+  }
+
+  .review-modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .review-modal-content {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 12px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 12px;
+      right: 20px;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+  </style>
+
+
+
+
+
+
+
+
+
+<!-- JS logic -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const bookButton = document.querySelector(".btn-book");
+      if (bookButton) {
+        bookButton.addEventListener("click", function () {
+          alert("Booking functionality coming soon!");
+        });
+      }
+
+      document.querySelectorAll('form.delete-listing-form').forEach(form => {
+        form.addEventListener("submit", function (event) {
+          if (!confirm("Are you sure you want to delete this listing? This action cannot be undone.")) {
+            event.preventDefault();
+          }
+        });
+      });
+
+      const toggleBtn = document.getElementById("toggleReviewsBtn");
+      const reviewModal = document.getElementById("reviewModal");
+      const closeBtn = document.getElementById("closeReviewModal");
+
+      toggleBtn.addEventListener("click", () => {
+        reviewModal.style.display = "flex";
+      });
+
+      closeBtn.addEventListener("click", () => {
+        reviewModal.style.display = "none";
+      });
+
+      window.addEventListener("click", (event) => {
+        if (event.target === reviewModal) {
+          reviewModal.style.display = "none";
         }
       });
     });
   </script>
+
+  <script src="https://unpkg.com/feather-icons"></script>
+  <script>feather.replace();</script>
 </body>

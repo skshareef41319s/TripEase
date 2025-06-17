@@ -4,6 +4,7 @@ const Listing = require("./models/listing");
 const path = require("path");
 const methodOverride = require("method-override");
 const ejsMate = require("ejs-mate");
+const Review = require("./models/review.js");
 
 const app = express();
 const port = 8080;
@@ -38,10 +39,10 @@ app.get("/", (req, res) => {
   res.render("listings/home.ejs");
 });
 
-
+// Index Route
 app.get("/listings", async (req, res) => {
   try {
-    const allListings = await Listing.find(); // Get all listings from the database
+    const allListings = await Listing.find();
     res.render("listings/index.ejs", { allListings });
   } catch (err) {
     console.error("Error fetching listings:", err);
@@ -49,7 +50,7 @@ app.get("/listings", async (req, res) => {
   }
 });
 
-// New Listing Route
+// New Listing Form Route
 app.get("/listings/new", (req, res) => {
   res.render("listings/new.ejs");
 });
@@ -58,7 +59,7 @@ app.get("/listings/new", (req, res) => {
 app.get("/listings/:id", async (req, res) => {
   const { id } = req.params;
   try {
-    const listing = await Listing.findById(id);
+    const listing = await Listing.findById(id).populate("reviews");
     if (listing) {
       res.render("listings/show.ejs", { listing });
     } else {
@@ -79,7 +80,7 @@ app.post("/listings", async (req, res) => {
       price: req.body.price,
       location: req.body.location,
       country: req.body.country,
-      image: req.body.image || "https://via.placeholder.com/600x400?text=No+Image", // Default image
+      image: req.body.image || "https://via.placeholder.com/600x400?text=No+Image",
     });
 
     await newListing.save();
@@ -90,7 +91,7 @@ app.post("/listings", async (req, res) => {
   }
 });
 
-// Edit Listing Route
+// Edit Listing Form Route
 app.get("/listings/:id/edit", async (req, res) => {
   const { id } = req.params;
   try {
@@ -112,7 +113,7 @@ app.put("/listings/:id", async (req, res) => {
   try {
     const updatedListing = await Listing.findByIdAndUpdate(id, req.body, {
       new: true,
-      runValidators: true, // Ensure model validations run on update
+      runValidators: true,
     });
 
     if (updatedListing) {
@@ -142,16 +143,53 @@ app.delete("/listings/:id", async (req, res) => {
   }
 });
 
+// Create Review Route
+app.post("/listings/:id/reviews", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const listing = await Listing.findById(id);
 
+    const { comment, rating } = req.body.review;
+
+    const review = new Review({ comment, rating });
+    await review.save();
+
+    listing.reviews.push(review);
+    await listing.save();
+
+    console.log("Review added:", comment, rating);
+
+    res.redirect(`/listings/${id}`);
+  } catch (err) {
+    console.error("Review submission failed:", err);
+    res.status(500).send("Something went wrong.");
+  }
+});
+
+// Delete Review Route
+app.delete("/listings/:listingId/reviews/:reviewId", async (req, res) => {
+  const { listingId, reviewId } = req.params;
+  try {
+    await Listing.findByIdAndUpdate(listingId, { $pull: { reviews: reviewId } });
+    await Review.findByIdAndDelete(reviewId);
+
+    console.log(`Review ${reviewId} deleted from listing ${listingId}`);
+    res.redirect(`/listings/${listingId}`);
+  } catch (err) {
+    console.error("Error deleting review:", err);
+    res.status(500).send("Something went wrong while deleting the review.");
+  }
+});
+
+// Profile Route (Demo)
 app.get("/profile", async (req, res) => {
   const user = {
     name: "Shareef",
     email: "skshareef41319@gmail.com",
-    listings: await Listing.find({ owner: "Shareef" }), // Default, no such owner field in Listing model
+    listings: await Listing.find({ owner: "Shareef" }), // Assumes owner field exists
   };
   res.render("listings/profile", { user });
 });
-
 
 // Start Server
 app.listen(port, () => {

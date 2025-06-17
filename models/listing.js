@@ -14,10 +14,10 @@ const listingSchema = new Schema({
     url: String,
   },
   price: {
-  type: Number,
-  required: true,
-  min: 0
-},
+    type: Number,
+    required: true,
+    min: 0,
+  },
 
   location: {
     type: String,
@@ -27,6 +27,13 @@ const listingSchema = new Schema({
     type: String,
     required: true,
   },
+
+  reviews: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "Review",
+    },
+  ],
 });
 const Listing = mongoose.model("Listing", listingSchema);
 module.exports = Listing;
