@@ -1,149 +1,132 @@
 <% layout("/layouts/boilerplate") %>
+
 <body>
-  <div class="container">
-    <h2 class="page-title">Create a New Plan</h2>
+  <div class="form-container">
+    <h2 class="form-title">🗺️ Create a New Destination Plan</h2>
 
-    <form action="/listings" method="POST" class="new-form">
-      <label for="title">Title:</label>
-      <input
-        type="text"
-        id="title"
-        name="title"
-        required
-        placeholder="Enter destination title"
-      />
+    <form action="/listings" method="POST" class="listing-form">
+      <div class="form-group">
+        <label for="title"><i class="fas fa-heading me-2"></i>Title</label>
+        <input type="text" id="title" name="title" placeholder="E.g., Paris Getaway" required />
+      </div>
 
-      <label for="description">Description:</label>
-      <textarea
-        id="description"
-        name="description"
-        required
-        placeholder="Enter destination description"
-      ></textarea>
+      <div class="form-group">
+        <label for="description"><i class="fas fa-align-left me-2"></i>Description</label>
+        <textarea id="description" name="description" placeholder="Briefly describe your plan" required></textarea>
+      </div>
 
-      <label for="price">Price (USD):</label>
-      <input
-        type="number"
-        id="price"
-        name="price"
-        required
-        min="0"
-        placeholder="Enter price"
-      />
+      <div class="form-group">
+        <label for="price"><i class="fas fa-dollar-sign me-2"></i>Price (USD)</label>
+        <input type="number" id="price" name="price" placeholder="Enter price" min="0" required />
+      </div>
 
-      <label for="location">Location:</label>
-      <input
-        type="text"
-        id="location"
-        name="location"
-        required
-        placeholder="Enter location"
-      />
+      <div class="form-group">
+        <label for="location"><i class="fas fa-map-marker-alt me-2"></i>Location</label>
+        <input type="text" id="location" name="location" placeholder="City, Region" required />
+      </div>
 
-      <label for="country">Country:</label>
-      <input
-        type="text"
-        id="country"
-        name="country"
-        required
-        placeholder="Enter country"
-      />
+      <div class="form-group">
+        <label for="country"><i class="fas fa-globe me-2"></i>Country</label>
+        <input type="text" id="country" name="country" placeholder="E.g., France" required />
+      </div>
 
-      <label for="image">Image URL:</label>
-      <input
-        type="text"
-        id="image"
-        name="image"
-        placeholder="Enter image URL"
-      />
+      <div class="form-group">
+        <label for="image"><i class="fas fa-image me-2"></i>Image URL</label>
+        <input type="text" id="image" name="image" placeholder="Paste image URL (optional)" />
+      </div>
 
-      <button type="submit" class="btn btn-primary">Create Listing</button>
+      <button type="submit" class="submit-btn">
+        <i class="fas fa-paper-plane me-2"></i>Submit Destination
+      </button>
     </form>
   </div>
 
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f9f9f9;
+      background: linear-gradient(to right, #d0e8f2, #f3f8fd);
       margin: 0;
-      padding: 2rem 0;
-      color: #333;
+      padding: 2rem 1rem;
     }
 
-    .container {
+    .form-container {
       max-width: 700px;
-      margin: 0 auto;
-      background: white;
-      padding: 2.5rem 3rem;
-      border-radius: 14px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.12);
+      margin: 2rem auto;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      padding: 2.5rem 2.5rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     }
 
-    .page-title {
+    .form-title {
       text-align: center;
       font-size: 2rem;
       font-weight: 700;
       margin-bottom: 2rem;
-      color: #2c3e50;
+      color: #0077cc;
     }
 
-    form.new-form {
+    .listing-form {
       display: flex;
       flex-direction: column;
-      gap: 1.3rem;
+      gap: 1.5rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
     }
 
     label {
       font-weight: 600;
-      margin-bottom: 0.3rem;
-      color: #555;
+      color: #333;
+      margin-bottom: 0.5rem;
     }
 
     input[type="text"],
     input[type="number"],
     textarea {
-      padding: 0.7rem 1rem;
-      font-size: 1.1rem;
-      border: 2px solid #ddd;
-      border-radius: 8px;
-      transition: border-color 0.3s ease;
-      resize: vertical;
-      font-family: inherit;
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      border: 2px solid #d0d0d0;
+      font-size: 1rem;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
     }
 
-    input[type="text"]:focus,
-    input[type="number"]:focus,
+    input:focus,
     textarea:focus {
-      border-color: #007BFF;
+      border-color: #007bff;
+      box-shadow: 0 0 0 0.1rem rgba(0, 123, 255, 0.25);
       outline: none;
     }
 
     textarea {
+      resize: vertical;
       min-height: 120px;
     }
 
-    button.btn-primary {
-      margin-top: 1rem;
-      background-color: #007BFF;
-      color: white;
-      font-weight: 700;
-      border: none;
-      border-radius: 25px;
-      padding: 0.8rem 1.8rem;
-      font-size: 1.1rem;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
+    .submit-btn {
       align-self: center;
-      width: fit-content;
+      background-color: #007bff;
+      color: #fff;
+      padding: 0.9rem 2rem;
+      border: none;
+      border-radius: 30px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease;
     }
 
-    button.btn-primary:hover {
+    .submit-btn:hover {
       background-color: #0056b3;
+      transform: scale(1.05);
     }
 
     @media (max-width: 600px) {
-      .container {
-        padding: 1.5rem 1.5rem;
+      .form-container {
+        padding: 1.5rem;
       }
     }
   </style>

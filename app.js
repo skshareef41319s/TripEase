@@ -1,197 +1,251 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const Listing = require("./models/listing");
 const path = require("path");
 const methodOverride = require("method-override");
 const ejsMate = require("ejs-mate");
-const Review = require("./models/review.js");
+const session = require("express-session");
+const MongoStore = require("connect-mongo");
+const passport = require("passport");
+const LocalStrategy = require("passport-local");
+
+const Listing = require("./models/listing");
+const Review = require("./models/review");
+const User = require("./models/user");
 
 const app = express();
 const port = 8080;
-app.use(methodOverride("_method")); // Allows using DELETE method in forms
 
-const dbURI = "mongodb://127.0.0.1:27017/TripEase";
+// ✅ MongoDB Connection
+mongoose.connect("mongodb://127.0.0.1:27017/TripEase")
+  .then(() => console.log("✅ MongoDB Connected"))
+  .catch(err => console.error("❌ MongoDB Connection Error:", err));
 
-// MongoDB connection
-async function main() {
-  try {
-    await mongoose.connect(dbURI);
-    console.log("✅ Connected to MongoDB");
-  } catch (err) {
-    console.error("❌ Error connecting to MongoDB:", err);
-  }
-}
-
-main();
-
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static("public"));
+// ✅ View Engine Setup
+app.engine("ejs", ejsMate);
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
-app.use(express.static(path.join(__dirname, "/public")));
+
+// ✅ Middleware Setup
+app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
-app.engine("ejs", ejsMate); 
+app.use(express.static(path.join(__dirname, "public")));
 
-// Root Route
+// ✅ Session + MongoStore Setup
+app.use(session({
+  secret: "trip-ease-secret",
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: "mongodb://127.0.0.1:27017/TripEase",
+    ttl: 60 * 60 * 24, // 1 day
+    autoRemove: 'native'
+  }),
+  cookie: {
+    maxAge: 1000 * 60 * 60 * 24,
+    httpOnly: true
+  }
+}));
+
+// ✅ Passport Auth Setup
+app.use(passport.initialize());
+app.use(passport.session());
+passport.use(new LocalStrategy(User.authenticate()));
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
+
+// ✅ Make user available in templates
+app.use((req, res, next) => {
+  res.locals.currentUser = req.user;
+  next();
+});
+
+// ✅ Auth middleware
+function isLoggedIn(req, res, next) {
+  if (!req.isAuthenticated()) return res.redirect("/login");
+  next();
+}
+
+// ✅ Intro Shown Once Per Session
 app.get("/", (req, res) => {
-  res.render("listings/home.ejs");
-});
-
-// Index Route
-app.get("/listings", async (req, res) => {
-  try {
-    const allListings = await Listing.find();
-    res.render("listings/index.ejs", { allListings });
-  } catch (err) {
-    console.error("Error fetching listings:", err);
-    res.status(500).send("Internal Server Error");
+  if (!req.session.introShown) {
+    return res.redirect("/intro");
   }
+  return req.isAuthenticated() ? res.redirect("/home") : res.redirect("/login");
 });
 
-// New Listing Form Route
-app.get("/listings/new", (req, res) => {
-  res.render("listings/new.ejs");
-});
 
-// Show Listing Route
-app.get("/listings/:id", async (req, res) => {
-  const { id } = req.params;
-  try {
-    const listing = await Listing.findById(id).populate("reviews");
-    if (listing) {
-      res.render("listings/show.ejs", { listing });
-    } else {
-      res.status(404).send("Listing not found.");
-    }
-  } catch (err) {
-    console.error("Error fetching listing details:", err);
-    res.status(500).send("Internal Server Error");
+// ✅ Intro Page (Animation Page)
+app.get("/intro", (req, res) => {
+  // Render intro only once per session
+  if (!req.session.introShown) {
+    req.session.introShown = true;
+    return res.render("auth/intro");
   }
+
+  // Skip intro if already shown
+  return req.isAuthenticated() ? res.redirect("/home") : res.redirect("/login");
 });
 
-// Create Listing Route
-app.post("/listings", async (req, res) => {
+
+// ✅ Home Page (After Login)
+app.get("/home", isLoggedIn, (req, res) => {
+  res.render("listings/home");
+});
+
+// ✅ Register
+app.get("/register", (req, res) => {
+  res.render("auth/register", { error: null });
+});
+
+app.post("/register", async (req, res) => {
   try {
-    const newListing = new Listing({
-      title: req.body.title,
-      description: req.body.description,
-      price: req.body.price,
-      location: req.body.location,
-      country: req.body.country,
-      image: req.body.image || "https://via.placeholder.com/600x400?text=No+Image",
+    const { username, password } = req.body;
+    const user = new User({ username });
+    const registeredUser = await User.register(user, password);
+    req.login(registeredUser, err => {
+      if (err) return next(err);
+      res.redirect("/home");
     });
-
-    await newListing.save();
-    res.redirect("/listings");
-  } catch (err) {
-    console.error("Error creating listing:", err);
-    res.status(500).send("Internal Server Error");
+  } catch (e) {
+    const message = e.name === "UserExistsError"
+      ? "Username already exists. Please choose a different one."
+      : "Registration failed. Please try again.";
+    res.render("auth/register", { error: message });
   }
 });
 
-// Edit Listing Form Route
-app.get("/listings/:id/edit", async (req, res) => {
-  const { id } = req.params;
-  try {
-    const listing = await Listing.findById(id);
-    if (listing) {
-      res.render("listings/edit.ejs", { listing });
-    } else {
-      res.status(404).send("Listing not found.");
+// ✅ Login
+app.get("/login", (req, res) => {
+  const error = req.session.loginError || null;
+  delete req.session.loginError;
+  res.render("auth/login", { error });
+});
+
+app.post("/login", (req, res, next) => {
+  passport.authenticate("local", (err, user) => {
+    if (err || !user) {
+      req.session.loginError = "Invalid username or password!";
+      return res.redirect("/login");
     }
-  } catch (err) {
-    console.error("Error fetching listing for edit:", err);
-    res.status(500).send("Internal Server Error");
-  }
-});
-
-// Update Listing Route
-app.put("/listings/:id", async (req, res) => {
-  const { id } = req.params;
-  try {
-    const updatedListing = await Listing.findByIdAndUpdate(id, req.body, {
-      new: true,
-      runValidators: true,
+    req.logIn(user, err => {
+      if (err) {
+        req.session.loginError = "Login failed. Please try again.";
+        return res.redirect("/login");
+      }
+      res.redirect("/home");
     });
-
-    if (updatedListing) {
-      res.redirect(`/listings/${updatedListing._id}`);
-    } else {
-      res.status(404).send("Listing not found.");
-    }
-  } catch (err) {
-    console.error("Error updating listing:", err);
-    res.status(500).send("Internal Server Error");
-  }
+  })(req, res, next);
 });
 
-// Delete Listing Route
-app.delete("/listings/:id", async (req, res) => {
+// ✅ Logout
+app.get("/logout", (req, res) => {
+  req.logout(() => {
+    req.session.introShown = false; // reset the intro for new session
+    res.redirect("/intro"); // show intro again
+  });
+});
+
+
+// ✅ Listings
+app.get("/listings", isLoggedIn, async (req, res) => {
+  const allListings = await Listing.find();
+  res.render("listings/index", { allListings });
+});
+
+app.get("/listings/new", isLoggedIn, (req, res) => {
+  res.render("listings/new");
+});
+
+app.post("/listings", isLoggedIn, async (req, res) => {
+  const newListing = new Listing({
+    title: req.body.title,
+    description: req.body.description,
+    price: req.body.price,
+    location: req.body.location,
+    country: req.body.country,
+    image: req.body.image || "https://via.placeholder.com/600x400?text=No+Image"
+  });
+  await newListing.save();
+  res.redirect("/listings");
+});
+
+app.get("/listings/:id", isLoggedIn, async (req, res) => {
+  const listing = await Listing.findById(req.params.id).populate("reviews");
+  res.render("listings/show", { listing });
+});
+
+app.get("/listings/:id/edit", isLoggedIn, async (req, res) => {
+  const listing = await Listing.findById(req.params.id);
+  res.render("listings/edit", { listing });
+});
+
+app.put("/listings/:id", isLoggedIn, async (req, res) => {
+  const updatedListing = await Listing.findByIdAndUpdate(req.params.id, req.body, {
+    new: true,
+    runValidators: true
+  });
+  res.redirect(`/listings/${updatedListing._id}`);
+});
+
+app.delete("/listings/:id", isLoggedIn, async (req, res) => {
+  await Listing.findByIdAndDelete(req.params.id);
+  res.redirect("/listings");
+});
+
+// ✅ Reviews
+app.post("/listings/:id/reviews", isLoggedIn, async (req, res) => {
+  const listing = await Listing.findById(req.params.id);
+  const review = new Review(req.body.review);
+  await review.save();
+  listing.reviews.push(review);
+  await listing.save();
+  res.redirect(`/listings/${listing._id}`);
+});
+
+app.delete("/listings/:listingId/reviews/:reviewId", isLoggedIn, async (req, res) => {
+  await Listing.findByIdAndUpdate(req.params.listingId, {
+    $pull: { reviews: req.params.reviewId }
+  });
+  await Review.findByIdAndDelete(req.params.reviewId);
+  res.redirect(`/listings/${req.params.listingId}`);
+});
+
+// ✅ Like / Unlike Listings
+app.post("/listings/:id/like", isLoggedIn, async (req, res) => {
   const { id } = req.params;
+  if (!req.user.likedListings.includes(id)) {
+    req.user.likedListings.push(id);
+    await req.user.save();
+  }
+  res.redirect(`/listings/${id}`);
+});
+
+app.post("/listings/:id/unlike", isLoggedIn, async (req, res) => {
+  req.user.likedListings = req.user.likedListings.filter(
+    (listingId) => listingId.toString() !== req.params.id
+  );
+  await req.user.save();
+  res.redirect(`/listings/${req.params.id}`);
+});
+
+// ✅ Profile Page
+app.get("/profile", isLoggedIn, async (req, res) => {
   try {
-    const deletedListing = await Listing.findByIdAndDelete(id);
-    if (deletedListing) {
-      res.redirect("/listings");
-    } else {
-      res.status(404).send("Listing not found.");
-    }
+    const user = await User.findById(req.user._id).populate("likedListings");
+    res.render("listings/profile", {
+      user: {
+        name: user.username,
+        email: `${user.username}@tripease.com`,
+        listings: user.likedListings
+      }
+    });
   } catch (err) {
-    console.error("Error deleting listing:", err);
-    res.status(500).send("Internal Server Error");
+    console.error("❌ Error loading profile:", err);
+    res.status(500).send("Error loading profile");
   }
 });
 
-// Create Review Route
-app.post("/listings/:id/reviews", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const listing = await Listing.findById(id);
-
-    const { comment, rating } = req.body.review;
-
-    const review = new Review({ comment, rating });
-    await review.save();
-
-    listing.reviews.push(review);
-    await listing.save();
-
-    console.log("Review added:", comment, rating);
-
-    res.redirect(`/listings/${id}`);
-  } catch (err) {
-    console.error("Review submission failed:", err);
-    res.status(500).send("Something went wrong.");
-  }
-});
-
-// Delete Review Route
-app.delete("/listings/:listingId/reviews/:reviewId", async (req, res) => {
-  const { listingId, reviewId } = req.params;
-  try {
-    await Listing.findByIdAndUpdate(listingId, { $pull: { reviews: reviewId } });
-    await Review.findByIdAndDelete(reviewId);
-
-    console.log(`Review ${reviewId} deleted from listing ${listingId}`);
-    res.redirect(`/listings/${listingId}`);
-  } catch (err) {
-    console.error("Error deleting review:", err);
-    res.status(500).send("Something went wrong while deleting the review.");
-  }
-});
-
-// Profile Route (Demo)
-app.get("/profile", async (req, res) => {
-  const user = {
-    name: "Shareef",
-    email: "skshareef41319@gmail.com",
-    listings: await Listing.find({ owner: "Shareef" }), // Assumes owner field exists
-  };
-  res.render("listings/profile", { user });
-});
-
-// Start Server
+// ✅ Start Server
 app.listen(port, () => {
-  console.log(`🚀 Server is running on http://localhost:${port}`);
+  console.log(`🚀 Server running on http://localhost:${port}`);
 });

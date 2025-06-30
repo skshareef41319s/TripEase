@@ -13,6 +13,17 @@
       </div>
     </div>
 
+    <% if (!currentUser || !currentUser.likedListings.includes(listing._id)) { %>
+  <form action="/listings/<%= listing._id %>/like" method="POST">
+    <button class="btn btn-outline-success">❤️ Like</button>
+  </form>
+<% } else { %>
+  <form action="/listings/<%= listing._id %>/unlike" method="POST">
+    <button class="btn btn-danger">💔 Unlike</button>
+  </form>
+<% } %>
+
+
     <!-- Action Buttons -->
     <div class="action-buttons mt-4 d-flex flex-wrap gap-3 justify-content-center">
       <a href="/listings/<%= listing._id %>/edit" class="btn btn-primary px-4">Edit</a>
@@ -404,26 +415,39 @@
 
 <!-- JS logic -->
   <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      const bookButton = document.querySelector(".btn-book");
-      if (bookButton) {
-        bookButton.addEventListener("click", function () {
-          alert("Booking functionality coming soon!");
-        });
-      }
-
-      document.querySelectorAll('form.delete-listing-form').forEach(form => {
-        form.addEventListener("submit", function (event) {
-          if (!confirm("Are you sure you want to delete this listing? This action cannot be undone.")) {
-            event.preventDefault();
-          }
-        });
+  document.addEventListener("DOMContentLoaded", function () {
+    // Booking alert
+    const bookButton = document.querySelector(".btn-book");
+    if (bookButton) {
+      bookButton.addEventListener("click", function () {
+        alert("🚧 Booking functionality coming soon!");
       });
+    }
 
-      const toggleBtn = document.getElementById("toggleReviewsBtn");
-      const reviewModal = document.getElementById("reviewModal");
-      const closeBtn = document.getElementById("closeReviewModal");
+    // Confirm before deleting listing
+    document.querySelectorAll("form.delete-listing-form").forEach(form => {
+      form.addEventListener("submit", function (event) {
+        if (!confirm("Are you sure you want to delete this listing? This action cannot be undone.")) {
+          event.preventDefault();
+        }
+      });
+    });
 
+    // Confirm before deleting review
+    document.querySelectorAll("form.delete-review-form").forEach(form => {
+      form.addEventListener("submit", function (event) {
+        if (!confirm("Are you sure you want to delete this review?")) {
+          event.preventDefault();
+        }
+      });
+    });
+
+    // Review modal toggle
+    const toggleBtn = document.getElementById("toggleReviewsBtn");
+    const reviewModal = document.getElementById("reviewModal");
+    const closeBtn = document.getElementById("closeReviewModal");
+
+    if (toggleBtn && reviewModal && closeBtn) {
       toggleBtn.addEventListener("click", () => {
         reviewModal.style.display = "flex";
       });
@@ -437,9 +461,11 @@
           reviewModal.style.display = "none";
         }
       });
-    });
-  </script>
+    }
+  });
+</script>
 
-  <script src="https://unpkg.com/feather-icons"></script>
-  <script>feather.replace();</script>
+<script src="https://unpkg.com/feather-icons"></script>
+<script>feather.replace();</script>
+
 </body>

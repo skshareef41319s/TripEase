@@ -5,62 +5,48 @@
     <h1 class="main-title">🌍 All Destinations</h1>
 
     <div class="btn-group">
-      <a href="/listings/new" class="btn"> Create Your Destination</a>
+      <a href="/listings/new" class="btn">Create Your Destination</a>
     </div>
 
     <% if (allListings.length > 0) { %>
-    <div class="card-grid">
-      <% allListings.forEach((listing) => { %>
-      <div class="card">
-        <button class="like-btn" aria-label="Like">
-          <svg
-            class="heart-icon"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
+      <div class="card-grid">
+        <% allListings.forEach((listing) => { 
+             const isLiked = currentUser && currentUser.likedListings.includes(listing._id.toString()); 
+        %>
+        <div class="card">
+          
+          <!-- Dynamic Like/Unlike Button -->
+          <form 
+            action="/listings/<%= listing._id %>/<%= isLiked ? 'unlike' : 'like' %>" 
+            method="POST" 
+            style="position: absolute; top: 12px; right: 12px;"
           >
-            <path
-              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 
-                  5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 
-                  5.5 0 0 0 0-7.78z"
-            ></path>
-          </svg>
-        </button>
-        <img
-          src="<%= listing.image.url %>"
-          alt="<%= listing.title %>"
-          class="card-image"
-        />
-        <div class="card-content">
-          <h2 class="card-title"><%= listing.title %></h2>
-          <a href="/listings/<%= listing._id %>" class="btn btn-small"
-            >View Details</a
-          >
+            <button type="submit" class="like-btn <%= isLiked ? 'liked' : '' %>" aria-label="Like">
+              <svg class="heart-icon" viewBox="0 0 24 24" fill="<%= isLiked ? '#ff4d6d' : 'none' %>" stroke="<%= isLiked ? '#ff4d6d' : 'currentColor' %>" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 
+                          5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 
+                          1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+                </path>
+              </svg>
+            </button>
+          </form>
+
+          <img src="<%= listing.image.url %>" alt="<%= listing.title %>" class="card-image" />
+          <div class="card-content">
+            <h2 class="card-title"><%= listing.title %></h2>
+            <a href="/listings/<%= listing._id %>" class="btn btn-small">View Details</a>
+          </div>
         </div>
+        <% }); %>
       </div>
-      <% }); %>
-    </div>
     <% } else { %>
-    <p class="no-entries">No entries available at the moment.</p>
+      <p class="no-entries">No entries available at the moment.</p>
     <% } %>
   </div>
 
   <!-- Scroll to Top Button -->
   <button id="scrollTopBtn" title="Go to top" aria-label="Go to top">
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      fill="none"
-      stroke="white"
-      stroke-width="3"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      viewBox="0 0 24 24"
-    >
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
       <polyline points="18 15 12 9 6 15" />
     </svg>
   </button>
@@ -274,43 +260,16 @@
     }
   </style>
 
+  <!-- Script -->
   <script>
-    // Toggle like button fill on click
-    document.querySelectorAll(".like-btn").forEach((button) => {
-      button.addEventListener("click", () => {
-        button.classList.toggle("liked");
-      });
-    });
-
-    // Scroll to top button
     const scrollTopBtn = document.getElementById("scrollTopBtn");
 
-    // Show button when user scrolls down 300px
     window.addEventListener("scroll", () => {
-      if (window.scrollY > 300) {
-        scrollTopBtn.style.display = "flex";
-      } else {
-        scrollTopBtn.style.display = "none";
-      }
+      scrollTopBtn.style.display = window.scrollY > 300 ? "flex" : "none";
     });
 
-    // Smooth scroll to top when button clicked
     scrollTopBtn.addEventListener("click", () => {
-      window.scrollTo({
-        top: 0,
-        behavior: "smooth",
-      });
-    });
-
-    // Alert when user click once on heart icon says "Added to favorites", second click says "Removed from favorites"
-    document.querySelectorAll(".like-btn").forEach((button) => {
-      button.addEventListener("click", () => {
-        if (button.classList.contains("liked")) {
-          alert("Added to favorites");
-        } else {
-          alert("Removed from favorites");
-        }
-      });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     });
   </script>
 </body>

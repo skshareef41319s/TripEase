@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Welcome | TripEase</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+
+  <!-- Animate.css -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+  <!-- Feather Icons -->
+  <script src="https://unpkg.com/feather-icons"></script>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      background: linear-gradient(120deg, #e0f7fa, #b2ebf2);
+      font-family: 'Poppins', sans-serif;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    .intro-container {
+      z-index: 10;
+      text-align: center;
+      animation: fadeIn 2s ease-out;
+    }
+
+    .logo {
+      font-family: 'Pacifico', cursive;
+      font-size: 3.5rem;
+      color: #007bff;
+      margin-bottom: 0.3rem;
+      animation: zoomIn 1.3s ease-out;
+    }
+
+    .tagline {
+      font-size: 1.4rem;
+      color: #333;
+      font-weight: 500;
+      animation: fadeInUp 2s ease;
+      margin-bottom: 2rem;
+    }
+
+    .start-btn {
+      background: #007bff;
+      border: none;
+      color: white;
+      padding: 0.8rem 2.2rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 35px;
+      cursor: pointer;
+      transition: transform 0.3s ease, background 0.3s ease;
+      animation: pulse 2s infinite;
+    }
+
+    .start-btn:hover {
+      background: #0056b3;
+      transform: scale(1.05);
+    }
+
+    /* Animated Clouds BG */
+    .clouds {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      z-index: 1;
+    }
+
+    .cloud {
+      position: absolute;
+      background: url('https://svgshare.com/i/12Xe.svg') no-repeat center;
+      background-size: contain;
+      width: 200px;
+      height: 100px;
+      opacity: 0.15;
+      animation: moveCloud 60s linear infinite;
+    }
+
+    .cloud:nth-child(2) {
+      top: 25%;
+      left: -300px;
+      animation-delay: 5s;
+    }
+
+    .cloud:nth-child(3) {
+      top: 60%;
+      left: -600px;
+      animation-delay: 10s;
+    }
+
+    @keyframes moveCloud {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(130vw); }
+    }
+
+    @keyframes zoomIn {
+      from { transform: scale(0.6); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes fadeInUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(0,123,255, 0.5); }
+      50% { box-shadow: 0 0 0 16px rgba(0,123,255, 0); }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Animated Clouds Background -->
+  <div class="clouds">
+    <div class="cloud"></div>
+    <div class="cloud"></div>
+    <div class="cloud"></div>
+  </div>
+
+  <!-- Main Intro Content -->
+  <div class="intro-container">
+    <div class="logo">TripEase</div>
+    <div class="tagline">Plan Smart. Travel Easy. 🌍</div>
+
+    <form action="/login">
+      <button type="submit" class="start-btn">Get Started</button>
+    </form>
+  </div>
+
+  <!-- Feather icons -->
+  <script>
+    feather.replace();
+
+    // Optional auto-redirect fallback (e.g., after 8 seconds)
+    setTimeout(() => {
+      window.location.href = "/login";
+    }, 8000);
+  </script>
+</body>
+</html>
