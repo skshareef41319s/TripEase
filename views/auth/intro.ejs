@@ -2,65 +2,81 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Welcome | TripEase</title>
 
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
 
-  <!-- Animate.css -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
-
   <!-- Feather Icons -->
   <script src="https://unpkg.com/feather-icons"></script>
 
+  <!-- Smooth animation styles -->
   <style>
     body {
       margin: 0;
       padding: 0;
       height: 100vh;
-      background: linear-gradient(120deg, #e0f7fa, #b2ebf2);
       font-family: 'Poppins', sans-serif;
-      overflow: hidden;
+      background: linear-gradient(145deg, #e0f7fa, #ffffff);
       display: flex;
       justify-content: center;
       align-items: center;
+      overflow: hidden;
       position: relative;
     }
 
     .intro-container {
-      z-index: 10;
+      z-index: 2;
       text-align: center;
-      animation: fadeIn 2s ease-out;
+      opacity: 0;
+      animation: fadeIn 1s ease-out forwards;
+      animation-delay: 0.8s;
     }
 
-    .logo {
+    .logo svg {
+      width: 80px;
+      height: 80px;
+      stroke: #007bff;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      animation: drawLogo 2.5s ease forwards;
+    }
+
+    .logo-text {
       font-family: 'Pacifico', cursive;
-      font-size: 3.5rem;
+      font-size: 2.8rem;
       color: #007bff;
-      margin-bottom: 0.3rem;
-      animation: zoomIn 1.3s ease-out;
+      margin-top: 0.5rem;
+      opacity: 0;
+      animation: fadeIn 1s ease 2s forwards;
     }
 
     .tagline {
-      font-size: 1.4rem;
+      font-size: 1.3rem;
       color: #333;
       font-weight: 500;
-      animation: fadeInUp 2s ease;
-      margin-bottom: 2rem;
+      width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      border-right: 2px solid #007bff;
+      margin: 0 auto 2rem;
+      animation: typing 3.4s steps(30, end) 2.2s forwards, cursorBlink 0.8s step-end infinite 5.6s;
     }
 
     .start-btn {
       background: #007bff;
-      border: none;
       color: white;
       padding: 0.8rem 2.2rem;
       font-size: 1rem;
       font-weight: 600;
+      border: none;
       border-radius: 35px;
       cursor: pointer;
-      transition: transform 0.3s ease, background 0.3s ease;
-      animation: pulse 2s infinite;
+      opacity: 0;
+      animation: fadeIn 1s ease 5.6s forwards, glow 2.5s ease-in-out infinite 6.2s;
     }
 
     .start-btn:hover {
@@ -68,7 +84,7 @@
       transform: scale(1.05);
     }
 
-    /* Animated Clouds BG */
+    /* Clouds */
     .clouds {
       position: absolute;
       top: 0;
@@ -83,60 +99,73 @@
       position: absolute;
       background: url('https://svgshare.com/i/12Xe.svg') no-repeat center;
       background-size: contain;
-      width: 200px;
+      width: 180px;
       height: 100px;
-      opacity: 0.15;
+      opacity: 0.1;
       animation: moveCloud 60s linear infinite;
     }
 
-    .cloud:nth-child(2) {
-      top: 25%;
-      left: -300px;
-      animation-delay: 5s;
+    .cloud:nth-child(2) { top: 25%; left: -250px; animation-delay: 3s; }
+    .cloud:nth-child(3) { top: 60%; left: -600px; animation-delay: 6s; }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
-    .cloud:nth-child(3) {
-      top: 60%;
-      left: -600px;
-      animation-delay: 10s;
+    @keyframes drawLogo {
+      0% { stroke-dasharray: 0 100; }
+      100% { stroke-dasharray: 100 0; }
+    }
+
+    @keyframes typing {
+      from { width: 0; }
+      to { width: 250px; }
+    }
+
+    @keyframes cursorBlink {
+      50% { border-color: transparent; }
+    }
+
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 0 0px rgba(0,123,255, 0.4); }
+      50% { box-shadow: 0 0 12px rgba(0,123,255, 0.3); }
     }
 
     @keyframes moveCloud {
       0% { transform: translateX(0); }
-      100% { transform: translateX(130vw); }
+      100% { transform: translateX(120vw); }
     }
 
-    @keyframes zoomIn {
-      from { transform: scale(0.6); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
-
-    @keyframes fadeInUp {
-      from { transform: translateY(20px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-
-    @keyframes pulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(0,123,255, 0.5); }
-      50% { box-shadow: 0 0 0 16px rgba(0,123,255, 0); }
+    @media (max-width: 500px) {
+      .logo svg { width: 60px; height: 60px; }
+      .logo-text { font-size: 2.2rem; }
+      .tagline { font-size: 1.1rem; width: 190px; }
+      .start-btn { font-size: 0.9rem; padding: 0.6rem 2rem; }
     }
   </style>
 </head>
 
 <body>
-  <!-- Animated Clouds Background -->
+  <!-- Clouds Background -->
   <div class="clouds">
     <div class="cloud"></div>
     <div class="cloud"></div>
     <div class="cloud"></div>
   </div>
 
-  <!-- Main Intro Content -->
+  <!-- Intro Content -->
   <div class="intro-container">
-    <div class="logo">TripEase</div>
-    <div class="tagline">Plan Smart. Travel Easy. 🌍</div>
+    <div class="logo">
+      <svg viewBox="0 0 24 24">
+        <path d="M2 16l20-8M2 12l10 2m-2 4l2 4m2-8l2 6m4-10l-4 2" />
+      </svg>
+      <div class="logo-text">TripEase</div>
+    </div>
+    <div class="tagline">Plan Smart. Travel Easy.</div>
 
-    <form action="/login">
+    <form action="/login" id="startForm">
       <button type="submit" class="start-btn">Get Started</button>
     </form>
   </div>
@@ -145,10 +174,17 @@
   <script>
     feather.replace();
 
-    // Optional auto-redirect fallback (e.g., after 8 seconds)
+    // 🌟 Play welcome sound
+    const audio = new Audio("https://assets.mixkit.co/active_storage/sfx/1552/1552-preview.mp3");
+    audio.volume = 0.5;
+    window.addEventListener("DOMContentLoaded", () => {
+      audio.play().catch(() => {}); // play on load if allowed
+    });
+
+    // Optional auto-redirect fallback
     setTimeout(() => {
       window.location.href = "/login";
-    }, 8000);
+    }, 10000);
   </script>
 </body>
 </html>

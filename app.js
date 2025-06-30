@@ -114,6 +114,31 @@ app.post("/register", async (req, res) => {
   }
 });
 
+app.get("/search", isLoggedIn, async (req, res) => {
+  const query = req.query.q.trim();
+
+  // Find listings where title or location contains the query (case-insensitive)
+  const listings = await Listing.find({
+    $or: [
+      { title: { $regex: query, $options: "i" } },
+      { location: { $regex: query, $options: "i" } },
+      { country: { $regex: query, $options: "i" } }
+    ]
+  });
+
+  if (listings.length === 1) {
+    // ✅ One match, redirect directly to its show page
+    return res.redirect(`/listings/${listings[0]._id}`);
+  } else if (listings.length > 1) {
+    // Multiple matches — show all (or redirect to a new "searchResults.ejs")
+    return res.render("listings/searchResults", { listings, query });
+  } else {
+    // ❌ No matches — show "not found" message or redirect back
+    return res.render("listings/searchResults", { listings: [], query });
+  }
+});
+
+
 // ✅ Login
 app.get("/login", (req, res) => {
   const error = req.session.loginError || null;

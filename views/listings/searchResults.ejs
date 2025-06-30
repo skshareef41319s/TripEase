@@ -1,0 +1,18 @@
+<% layout("/layouts/boilerplate") %>
+<div class="container mt-4">
+  <h2>Search Results for "<%= query %>"</h2>
+
+  <% if (listings.length === 0) { %>
+    <p>No matching destinations found.</p>
+  <% } else { %>
+    <ul>
+      <% listings.forEach(listing => { %>
+        <li>
+          <a href="/listings/<%= listing._id %>">
+            <strong><%= listing.title %></strong> – <%= listing.location %>, <%= listing.country %>
+          </a>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
+</div>
