@@ -15,22 +15,22 @@ const User = require("./models/user");
 const app = express();
 const port = 8080;
 
-// ✅ MongoDB Connection
+// ✅ Connect to MongoDB
 mongoose.connect("mongodb://127.0.0.1:27017/TripEase")
   .then(() => console.log("✅ MongoDB Connected"))
   .catch(err => console.error("❌ MongoDB Connection Error:", err));
 
-// ✅ View Engine Setup
+// ✅ Set view engine
 app.engine("ejs", ejsMate);
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
-// ✅ Middleware Setup
+// ✅ Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 app.use(express.static(path.join(__dirname, "public")));
 
-// ✅ Session + MongoStore Setup
+// ✅ Session & Store
 app.use(session({
   secret: "trip-ease-secret",
   resave: false,
@@ -46,48 +46,42 @@ app.use(session({
   }
 }));
 
-// ✅ Passport Auth Setup
+// ✅ Passport Config
 app.use(passport.initialize());
 app.use(passport.session());
 passport.use(new LocalStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
-// ✅ Make user available in templates
+// ✅ Pass user to all views
 app.use((req, res, next) => {
   res.locals.currentUser = req.user;
   next();
 });
 
-// ✅ Auth middleware
+// ✅ Middleware for protected routes
 function isLoggedIn(req, res, next) {
   if (!req.isAuthenticated()) return res.redirect("/login");
   next();
 }
 
-// ✅ Intro Shown Once Per Session
+// ✅ Root Route — Show intro once, then login or home
 app.get("/", (req, res) => {
-  if (!req.session.introShown) {
+  if (req.session.introShown) {
     return res.redirect("/intro");
   }
   return req.isAuthenticated() ? res.redirect("/home") : res.redirect("/login");
 });
 
-
-// ✅ Intro Page (Animation Page)
+// ✅ Intro Page
 app.get("/intro", (req, res) => {
-  // Render intro only once per session
-  if (!req.session.introShown) {
-    req.session.introShown = true;
-    return res.render("auth/intro");
-  }
-
-  // Skip intro if already shown
-  return req.isAuthenticated() ? res.redirect("/home") : res.redirect("/login");
+  if (req.isAuthenticated()) return res.redirect("/home");
+  req.session.introShown = true; // mark intro as shown
+  res.render("auth/intro");
 });
 
 
-// ✅ Home Page (After Login)
+// ✅ Home Page
 app.get("/home", isLoggedIn, (req, res) => {
   res.render("listings/home");
 });
@@ -113,31 +107,6 @@ app.post("/register", async (req, res) => {
     res.render("auth/register", { error: message });
   }
 });
-
-app.get("/search", isLoggedIn, async (req, res) => {
-  const query = req.query.q.trim();
-
-  // Find listings where title or location contains the query (case-insensitive)
-  const listings = await Listing.find({
-    $or: [
-      { title: { $regex: query, $options: "i" } },
-      { location: { $regex: query, $options: "i" } },
-      { country: { $regex: query, $options: "i" } }
-    ]
-  });
-
-  if (listings.length === 1) {
-    // ✅ One match, redirect directly to its show page
-    return res.redirect(`/listings/${listings[0]._id}`);
-  } else if (listings.length > 1) {
-    // Multiple matches — show all (or redirect to a new "searchResults.ejs")
-    return res.render("listings/searchResults", { listings, query });
-  } else {
-    // ❌ No matches — show "not found" message or redirect back
-    return res.render("listings/searchResults", { listings: [], query });
-  }
-});
-
 
 // ✅ Login
 app.get("/login", (req, res) => {
@@ -165,11 +134,10 @@ app.post("/login", (req, res, next) => {
 // ✅ Logout
 app.get("/logout", (req, res) => {
   req.logout(() => {
-    req.session.introShown = false; // reset the intro for new session
-    res.redirect("/intro"); // show intro again
+    req.session.introShown = false; // reset intro on logout
+    res.redirect("/intro");
   });
 });
-
 
 // ✅ Listings
 app.get("/listings", isLoggedIn, async (req, res) => {
@@ -235,7 +203,7 @@ app.delete("/listings/:listingId/reviews/:reviewId", isLoggedIn, async (req, res
   res.redirect(`/listings/${req.params.listingId}`);
 });
 
-// ✅ Like / Unlike Listings
+// ✅ Like / Unlike
 app.post("/listings/:id/like", isLoggedIn, async (req, res) => {
   const { id } = req.params;
   if (!req.user.likedListings.includes(id)) {
@@ -253,7 +221,25 @@ app.post("/listings/:id/unlike", isLoggedIn, async (req, res) => {
   res.redirect(`/listings/${req.params.id}`);
 });
 
-// ✅ Profile Page
+// ✅ Search
+app.get("/search", isLoggedIn, async (req, res) => {
+  const query = req.query.q.trim();
+  const listings = await Listing.find({
+    $or: [
+      { title: { $regex: query, $options: "i" } },
+      { location: { $regex: query, $options: "i" } },
+      { country: { $regex: query, $options: "i" } }
+    ]
+  });
+
+  if (listings.length === 1) {
+    return res.redirect(`/listings/${listings[0]._id}`);
+  } else {
+    return res.render("listings/searchResults", { listings, query });
+  }
+});
+
+// ✅ Profile
 app.get("/profile", isLoggedIn, async (req, res) => {
   try {
     const user = await User.findById(req.user._id).populate("likedListings");
@@ -272,5 +258,5 @@ app.get("/profile", isLoggedIn, async (req, res) => {
 
 // ✅ Start Server
 app.listen(port, () => {
-  console.log(`🚀 Server running on http://localhost:${port}`);
+  console.log(`🚀 Server running at http://localhost:${port}`);
 });
