@@ -1,0 +1,14 @@
+<% layout("/layouts/boilerplate") %>
+<h2>My Bookings</h2>
+
+<% if (bookings.length === 0) { %>
+  <p>No bookings made yet.</p>
+<% } else { %>
+  <ul>
+    <% bookings.forEach(b => { %>
+      <li>
+        <strong><%= b.listing.title %></strong> – <%= b.date.toDateString() %> – Guests: <%= b.guests %>
+      </li>
+    <% }) %>
+  </ul>
+<% } %>

@@ -4,38 +4,75 @@
   <div class="container">
     <!-- Listing Detail Card -->
     <div class="card detail-card">
-      <img src="<%= listing.image.url %>" alt="Destination Image" class="card-image" />
+      <img
+        src="<%= listing.image.url %>"
+        alt="Destination Image"
+        class="card-image"
+      />
       <div class="card-content">
         <h1 class="card-title"><%= listing.title %></h1>
-        <p class="card-subtext"><%= listing.location %>, <%= listing.country %></p>
+        <p class="card-subtext">
+          <%= listing.location %>, <%= listing.country %>
+        </p>
         <p class="card-description"><%= listing.description %></p>
         <p class="card-price">Price: $<%= listing.price %></p>
       </div>
     </div>
 
-    <% if (!currentUser || !currentUser.likedListings.includes(listing._id)) { %>
-  <form action="/listings/<%= listing._id %>/like" method="POST">
-    <button class="btn btn-outline-success">❤️ Like</button>
-  </form>
-<% } else { %>
-  <form action="/listings/<%= listing._id %>/unlike" method="POST">
-    <button class="btn btn-danger">💔 Unlike</button>
-  </form>
-<% } %>
+    <div class="like-unlike-btn">
+  <% if (!currentUser || !currentUser.likedListings.includes(listing._id)) { %>
+    <form action="/listings/<%= listing._id %>/like" method="POST">
+      <button type="submit" class="emoji-btn" title="Like this destination">❤️</button>
+    </form>
+  <% } else { %>
+    <form action="/listings/<%= listing._id %>/unlike" method="POST">
+      <button type="submit" class="emoji-btn liked" title="Unlike this destination">💔</button>
+    </form>
+  <% } %>
+</div>
 
 
     <!-- Action Buttons -->
-    <div class="action-buttons mt-4 d-flex flex-wrap gap-3 justify-content-center">
-      <a href="/listings/<%= listing._id %>/edit" class="btn btn-primary px-4">Edit</a>
+    <div
+      class="action-buttons mt-4 d-flex flex-wrap gap-3 justify-content-center"
+    >
+      <a href="/listings/<%= listing._id %>/edit" class="btn btn-primary px-4"
+        >Edit</a
+      >
 
-      <form action="/listings/<%= listing._id %>?_method=DELETE" method="POST" class="form-css delete-listing-form">
-        <button type="submit" class="btn btn-danger px-4 d-flex align-items-center justify-content-center">
+      <form
+        action="/listings/<%= listing._id %>?_method=DELETE"
+        method="POST"
+        class="form-css delete-listing-form"
+      >
+        <button
+          type="submit"
+          class="btn btn-danger px-4 d-flex align-items-center justify-content-center"
+        >
           <i class="bi bi-trash"></i> Delete
         </button>
       </form>
 
-      <button class="btn btn-book px-4">Book</button>
-      <a href="/listings" class="btn btn-outline-secondary px-4">Back to Destinations</a>
+      <form action="/listings/<%= listing._id %>/book" method="POST" class="booking-form">
+  <div class="booking-group">
+    <label for="date">Date</label>
+    <input type="date" name="date" id="date" required class="booking-input" />
+  </div>
+
+  <div class="booking-group">
+    <label for="guests">Guests</label>
+    <input type="number" name="guests" id="guests" min="1" value="1" required class="booking-input" />
+  </div>
+
+  <button type="submit" class="btn btn-book align-self-center">
+    <i class="fas fa-check-circle me-1"></i> Book Now
+  </button>
+</form>
+
+
+      <a href="/listings" class="btn btn-outline-secondary px-4"
+        >Back to Destinations</a
+      >
     </div>
 
     <!-- Review Toggle Button -->
@@ -49,17 +86,32 @@
         <span class="close-btn" id="closeReviewModal">&times;</span>
 
         <h3>Leave a Review</h3>
-        <form action="/listings/<%= listing._id %>/reviews" method="POST" class="review-form">
+        <form
+          action="/listings/<%= listing._id %>/reviews"
+          method="POST"
+          class="review-form"
+        >
           <div class="form-group">
             <label for="reviewText">Your Comment</label>
-            <textarea id="reviewText" name="review[comment]" placeholder="Share your experience..." required></textarea>
+            <textarea
+              id="reviewText"
+              name="review[comment]"
+              placeholder="Share your experience..."
+              required
+            ></textarea>
           </div>
           <div class="form-group rating-group">
             <label>Your Rating</label>
             <div class="star-rating">
               <% for(let i = 5; i >= 1; i--) { %>
-                <input type="radio" id="star-<%= i %>" name="review[rating]" value="<%= i %>" required />
-                <label for="star-<%= i %>">&#9733;</label>
+              <input
+                type="radio"
+                id="star-<%= i %>"
+                name="review[rating]"
+                value="<%= i %>"
+                required
+              />
+              <label for="star-<%= i %>">&#9733;</label>
               <% } %>
             </div>
           </div>
@@ -67,41 +119,39 @@
         </form>
 
         <% if(listing.reviews && listing.reviews.length > 0) { %>
-          <div class="reviews-list mt-4">
-            <h4>What others are saying</h4>
-            <% listing.reviews.forEach(review => { %>
-              <div class="review-card">
-                <p class="review-comment">"<%= review.comment %>"</p>
-                <div class="review-rating">
-                  <% for(let i = 1; i <= 5; i++) { %>
-                    <% if(i <= review.rating) { %>
-                      <span class="star filled">&#9733;</span>
-                    <% } else { %>
-                      <span class="star">&#9734;</span>
-                    <% } %>
-                  <% } %>
-                </div>
-                <form action="/listings/<%= listing._id %>/reviews/<%= review._id %>?_method=DELETE" method="POST" class="delete-review-form">
-                  <button type="submit" class="btn btn-danger btn-sm mt-2">Delete Review</button>
-                </form>
-              </div>
-            <% }) %>
+        <div class="reviews-list mt-4">
+          <h4>What others are saying</h4>
+          <% listing.reviews.forEach(review => { %>
+          <div class="review-card">
+            <p class="review-comment">"<%= review.comment %>"</p>
+            <div class="review-rating">
+              <% for(let i = 1; i <= 5; i++) { %> <% if(i <= review.rating) { %>
+              <span class="star filled">&#9733;</span>
+              <% } else { %>
+              <span class="star">&#9734;</span>
+              <% } %> <% } %>
+            </div>
+            <form
+              action="/listings/<%= listing._id %>/reviews/<%= review._id %>?_method=DELETE"
+              method="POST"
+              class="delete-review-form"
+            >
+              <button type="submit" class="btn btn-danger btn-sm mt-2">
+                Delete Review
+              </button>
+            </form>
           </div>
+          <% }) %>
+        </div>
         <% } %>
       </div>
     </div>
   </div>
 
-
-
-
-
-
-
-<!-- Styling -->
+  <!-- Styling -->
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       background-color: #f9f9f9;
       color: #333;
       margin: 0;
@@ -117,7 +167,7 @@
     .detail-card {
       background: white;
       border-radius: 14px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.12);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.12);
       overflow: hidden;
       display: flex;
       flex-direction: column;
@@ -126,7 +176,7 @@
 
     .detail-card:hover {
       transform: translateY(-8px);
-      box-shadow: 0 16px 32px rgba(0,0,0,0.18);
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.18);
     }
 
     .card-image {
@@ -188,7 +238,7 @@
     }
 
     .btn-primary {
-      background-color: #007BFF;
+      background-color: #007bff;
       color: white;
     }
 
@@ -251,136 +301,138 @@
     }
 
     .review-section {
-  margin-top: 3rem;
-  padding: 2rem;
-  background-color: var(--card-bg, #fff);
-  border-radius: 5px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-}
+      margin-top: 3rem;
+      padding: 2rem;
+      background-color: var(--card-bg, #fff);
+      border-radius: 5px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    }
 
-.review-section h3,
-.reviews-list h4 {
-  margin-bottom: 1rem;
-  color: var(--text-color, #222);
-}
+    .review-section h3,
+    .reviews-list h4 {
+      margin-bottom: 1rem;
+      color: var(--text-color, #222);
+    }
 
-.review-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  width: 100%;
-}
-
-.form-group label {
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  display: inline-block;
-}
-
-.review-form textarea {
-  width: 100%;
-  border-radius: 10px;
-  padding: 1rem;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  resize: vertical;
-  background: var(--bg-color, #f9f9f9);
-  color: var(--text-color, #333);
-  transition: border 0.3s;
-}
-
-.review-form textarea:focus {
-  border-color: var(--accent, #007BFF);
-  outline: none;
-}
-
-.rating-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.star-rating {
-  display: flex;
-  flex-direction: row-reverse;
-  justify-content: flex-start;
-  gap: 0.3rem;
-}
-
-.star-rating input[type="radio"] {
-  display: none;
-}
-
-.star-rating label {
-  font-size: 2rem;
-  color: #ccc;
-  cursor: pointer;
-  transition: color 0.3s ease;
-}
-
-.star-rating input[type="radio"]:checked ~ label,
-.star-rating label:hover,
-.star-rating label:hover ~ label {
-  color: gold;
-}
-
-/* Review List */
-.reviews-list {
-    margin-top: 2rem;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-  }
-
-  .review-card {
-    background-color: #fff;
-    padding: 1rem 1.2rem;
-    border-radius: 10px;
-    border: 1px solid #ddd;
-    width: calc(50% - 0.5rem);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-    transition: transform 0.2s ease;
-  }
-
-  .review-card:hover {
-    transform: translateY(-3px);
-  }
-
-  .review-comment {
-    font-size: 0.85rem;
-    font-style: italic;
-    color: #333;
-    margin-bottom: 0.5rem;
-  }
-
-  .review-rating .star {
-    font-size: 1rem;
-    color: #bbb;
-  }
-
-  .review-rating .filled {
-    color: gold;
-  }
-
-  .btn-sm {
-    font-size: 0.75rem;
-    padding: 0.3rem 0.6rem;
-    border-radius: 6px;
-  }
-
-  @media (max-width: 768px) {
-    .review-card {
+    .review-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
       width: 100%;
     }
-  }
 
-  .review-modal {
+    .form-group label {
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      display: inline-block;
+    }
+
+    .review-form textarea {
+      width: 100%;
+      border-radius: 10px;
+      padding: 1rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      resize: vertical;
+      background: var(--bg-color, #f9f9f9);
+      color: var(--text-color, #333);
+      transition: border 0.3s;
+    }
+
+    .review-form textarea:focus {
+      border-color: var(--accent, #007bff);
+      outline: none;
+    }
+
+    .rating-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .star-rating {
+      display: flex;
+      flex-direction: row-reverse;
+      justify-content: flex-start;
+      gap: 0.3rem;
+    }
+
+    .star-rating input[type="radio"] {
+      display: none;
+    }
+
+    .star-rating label {
+      font-size: 2rem;
+      color: #ccc;
+      cursor: pointer;
+      transition: color 0.3s ease;
+    }
+
+    .star-rating input[type="radio"]:checked ~ label,
+    .star-rating label:hover,
+    .star-rating label:hover ~ label {
+      color: gold;
+    }
+
+    /* Review List */
+    .reviews-list {
+      margin-top: 2rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .review-card {
+      background-color: #fff;
+      padding: 1rem 1.2rem;
+      border-radius: 10px;
+      border: 1px solid #ddd;
+      width: calc(50% - 0.5rem);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      transition: transform 0.2s ease;
+    }
+
+    .review-card:hover {
+      transform: translateY(-3px);
+    }
+
+    .review-comment {
+      font-size: 0.85rem;
+      font-style: italic;
+      color: #333;
+      margin-bottom: 0.5rem;
+    }
+
+    .review-rating .star {
+      font-size: 1rem;
+      color: #bbb;
+    }
+
+    .review-rating .filled {
+      color: gold;
+    }
+
+    .btn-sm {
+      font-size: 0.75rem;
+      padding: 0.3rem 0.6rem;
+      border-radius: 6px;
+    }
+
+    @media (max-width: 768px) {
+      .review-card {
+        width: 100%;
+      }
+    }
+
+    .review-modal {
       display: none;
       position: fixed;
       z-index: 999;
-      left: 0; top: 0;
-      width: 100%; height: 100%;
-      background: rgba(0,0,0,0.4);
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.4);
       justify-content: center;
       align-items: center;
     }
@@ -403,69 +455,157 @@
       font-size: 1.5rem;
       cursor: pointer;
     }
+
+    .booking-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: end;
+  justify-content: center;
+  margin-top: 2rem;
+  background-color: #ffffff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+}
+
+.booking-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.booking-group label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #2c3e50;
+}
+
+.booking-input {
+  padding: 0.6rem 1rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+  transition: border-color 0.3s ease;
+}
+
+.booking-input:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+.btn-book {
+  background-color: #28a745;
+  color: white;
+  font-weight: 600;
+  padding: 0.7rem 2rem;
+  border-radius: 25px;
+  border: none;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.btn-book:hover {
+  background-color: #218838;
+  transform: scale(1.05);
+}
+
+@media screen and (max-width: 600px) {
+  .booking-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-book {
+    width: 100%;
+  }
+}
+
+.like-unlike-btn {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.emoji-btn {
+  font-size: 1.8rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s ease, color 0.3s ease;
+  padding: 0.3rem 0.6rem;
+  line-height: 1;
+  border-radius: 50%;
+}
+
+.emoji-btn:hover {
+  transform: scale(1.2);
+}
+
+.emoji-btn.liked:hover {
+  color: #dc3545;
+}
+
+.emoji-btn:not(.liked):hover {
+  color: #28a745;
+}
+
+
   </style>
 
-
-
-
-
-
-
-
-
-<!-- JS logic -->
+  <!-- JS logic -->
   <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    // Booking alert
-    const bookButton = document.querySelector(".btn-book");
-    if (bookButton) {
-      bookButton.addEventListener("click", function () {
-        alert("🚧 Booking functionality coming soon!");
-      });
-    }
+    document.addEventListener("DOMContentLoaded", function () {
+      // Booking alert
+      const bookButton = document.querySelector(".btn-book");
 
-    // Confirm before deleting listing
-    document.querySelectorAll("form.delete-listing-form").forEach(form => {
-      form.addEventListener("submit", function (event) {
-        if (!confirm("Are you sure you want to delete this listing? This action cannot be undone.")) {
-          event.preventDefault();
-        }
-      });
-    });
-
-    // Confirm before deleting review
-    document.querySelectorAll("form.delete-review-form").forEach(form => {
-      form.addEventListener("submit", function (event) {
-        if (!confirm("Are you sure you want to delete this review?")) {
-          event.preventDefault();
-        }
-      });
-    });
-
-    // Review modal toggle
-    const toggleBtn = document.getElementById("toggleReviewsBtn");
-    const reviewModal = document.getElementById("reviewModal");
-    const closeBtn = document.getElementById("closeReviewModal");
-
-    if (toggleBtn && reviewModal && closeBtn) {
-      toggleBtn.addEventListener("click", () => {
-        reviewModal.style.display = "flex";
+      // Confirm before deleting listing
+      document.querySelectorAll("form.delete-listing-form").forEach((form) => {
+        form.addEventListener("submit", function (event) {
+          if (
+            !confirm(
+              "Are you sure you want to delete this listing? This action cannot be undone."
+            )
+          ) {
+            event.preventDefault();
+          }
+        });
       });
 
-      closeBtn.addEventListener("click", () => {
-        reviewModal.style.display = "none";
+      // Confirm before deleting review
+      document.querySelectorAll("form.delete-review-form").forEach((form) => {
+        form.addEventListener("submit", function (event) {
+          if (!confirm("Are you sure you want to delete this review?")) {
+            event.preventDefault();
+          }
+        });
       });
 
-      window.addEventListener("click", (event) => {
-        if (event.target === reviewModal) {
+      // Review modal toggle
+      const toggleBtn = document.getElementById("toggleReviewsBtn");
+      const reviewModal = document.getElementById("reviewModal");
+      const closeBtn = document.getElementById("closeReviewModal");
+
+      if (toggleBtn && reviewModal && closeBtn) {
+        toggleBtn.addEventListener("click", () => {
+          reviewModal.style.display = "flex";
+        });
+
+        closeBtn.addEventListener("click", () => {
           reviewModal.style.display = "none";
-        }
-      });
-    }
-  });
-</script>
+        });
 
-<script src="https://unpkg.com/feather-icons"></script>
-<script>feather.replace();</script>
+        window.addEventListener("click", (event) => {
+          if (event.target === reviewModal) {
+            reviewModal.style.display = "none";
+          }
+        });
+      }
+    });
+  </script>
 
+  <script src="https://unpkg.com/feather-icons"></script>
+  <script>
+    feather.replace();
+  </script>
 </body>

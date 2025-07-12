@@ -10,17 +10,18 @@ const LocalStrategy = require("passport-local");
 
 const Listing = require("./models/listing");
 const Review = require("./models/review");
+const Booking = require("./models/booking");
 const User = require("./models/user");
 
 const app = express();
 const port = 8080;
 
-// ✅ Connect to MongoDB
+// ✅ MongoDB Connection
 mongoose.connect("mongodb://127.0.0.1:27017/TripEase")
   .then(() => console.log("✅ MongoDB Connected"))
   .catch(err => console.error("❌ MongoDB Connection Error:", err));
 
-// ✅ Set view engine
+// ✅ View Engine Setup
 app.engine("ejs", ejsMate);
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
@@ -46,50 +47,49 @@ app.use(session({
   }
 }));
 
-// ✅ Passport Config
+// ✅ Passport Setup
 app.use(passport.initialize());
 app.use(passport.session());
 passport.use(new LocalStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
-// ✅ Pass user to all views
+// ✅ Make user available to templates
 app.use((req, res, next) => {
   res.locals.currentUser = req.user;
   next();
 });
 
-// ✅ Middleware for protected routes
+// ✅ Middleware to protect routes
 function isLoggedIn(req, res, next) {
   if (!req.isAuthenticated()) return res.redirect("/login");
   next();
 }
 
-// ✅ Root Route — Show intro once, then login or home
+// ✅ Intro logic (once per session)
 app.get("/", (req, res) => {
-  if (req.session.introShown) {
+  // Always show intro first on startup
+  if (!req.session.introShown) {
+    req.session.introShown = true;
     return res.redirect("/intro");
   }
+
+  // After intro shown once in the session
   return req.isAuthenticated() ? res.redirect("/home") : res.redirect("/login");
 });
 
-// ✅ Intro Page
+
 app.get("/intro", (req, res) => {
   if (req.isAuthenticated()) return res.redirect("/home");
-  req.session.introShown = true; // mark intro as shown
+  req.session.introShown = true;
   res.render("auth/intro");
 });
 
-
-// ✅ Home Page
-app.get("/home", isLoggedIn, (req, res) => {
-  res.render("listings/home");
+// ✅ Auth Routes
+app.get("/intro", (req, res) => {
+  res.render("auth/intro"); // Show the intro screen
 });
 
-// ✅ Register
-app.get("/register", (req, res) => {
-  res.render("auth/register", { error: null });
-});
 
 app.post("/register", async (req, res) => {
   try {
@@ -108,7 +108,6 @@ app.post("/register", async (req, res) => {
   }
 });
 
-// ✅ Login
 app.get("/login", (req, res) => {
   const error = req.session.loginError || null;
   delete req.session.loginError;
@@ -131,12 +130,16 @@ app.post("/login", (req, res, next) => {
   })(req, res, next);
 });
 
-// ✅ Logout
 app.get("/logout", (req, res) => {
   req.logout(() => {
-    req.session.introShown = false; // reset intro on logout
+    req.session.introShown = false;
     res.redirect("/intro");
   });
+});
+
+// ✅ Home Page
+app.get("/home", isLoggedIn, (req, res) => {
+  res.render("listings/home");
 });
 
 // ✅ Listings
@@ -203,7 +206,7 @@ app.delete("/listings/:listingId/reviews/:reviewId", isLoggedIn, async (req, res
   res.redirect(`/listings/${req.params.listingId}`);
 });
 
-// ✅ Like / Unlike
+// ✅ Likes
 app.post("/listings/:id/like", isLoggedIn, async (req, res) => {
   const { id } = req.params;
   if (!req.user.likedListings.includes(id)) {
@@ -219,6 +222,26 @@ app.post("/listings/:id/unlike", isLoggedIn, async (req, res) => {
   );
   await req.user.save();
   res.redirect(`/listings/${req.params.id}`);
+});
+
+// ✅ Bookings
+app.post("/listings/:id/book", isLoggedIn, async (req, res) => {
+  const listing = await Listing.findById(req.params.id);
+  const { date, guests } = req.body;
+
+  const booking = new Booking({
+    user: req.user._id,
+    listing: listing._id,
+    date,
+    guests
+  });
+
+  await booking.save();
+
+  req.user.bookings.push(booking._id);
+  await req.user.save();
+
+  res.redirect("/profile");
 });
 
 // ✅ Search
@@ -239,15 +262,19 @@ app.get("/search", isLoggedIn, async (req, res) => {
   }
 });
 
-// ✅ Profile
+// ✅ Profile Page
 app.get("/profile", isLoggedIn, async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).populate("likedListings");
+    const user = await User.findById(req.user._id)
+      .populate("likedListings")
+      .populate({ path: "bookings", populate: { path: "listing" } });
+
     res.render("listings/profile", {
       user: {
         name: user.username,
         email: `${user.username}@tripease.com`,
-        listings: user.likedListings
+        listings: user.likedListings,
+        bookings: user.bookings
       }
     });
   } catch (err) {
@@ -256,7 +283,23 @@ app.get("/profile", isLoggedIn, async (req, res) => {
   }
 });
 
-// ✅ Start Server
+// ✅ Cancel Booking
+app.delete("/bookings/:id", isLoggedIn, async (req, res) => {
+  const bookingId = req.params.id;
+
+  // Remove booking from user's list
+  await User.findByIdAndUpdate(req.user._id, {
+    $pull: { bookings: bookingId }
+  });
+
+  // Delete the booking itself
+  await Booking.findByIdAndDelete(bookingId);
+
+  res.redirect("/profile");
+});
+
+
+// ✅ Server Listen
 app.listen(port, () => {
   console.log(`🚀 Server running at http://localhost:${port}`);
 });
