@@ -48,3 +48,42 @@
     <p>Made with ❤️ by the TripEase team</p>
   </div>
 </footer>
+
+<script>
+  // 🔁 Fade-in on load
+  document.addEventListener("DOMContentLoaded", () => {
+    document.body.classList.add("route-in");
+  });
+
+  // 🔁 Fade-out on link click
+  document.addEventListener("click", (e) => {
+    const link = e.target.closest("a");
+
+    if (
+      link &&
+      link.href &&
+      link.target !== "_blank" &&
+      !link.href.includes("#") &&
+      !link.classList.contains("no-anim")
+    ) {
+      e.preventDefault();
+      document.body.classList.remove("route-in");
+      document.body.classList.add("route-out");
+
+      // Wait for animation then redirect
+      setTimeout(() => {
+        window.location.href = link.href;
+      }, 500); // Match CSS timing
+    }
+  });
+
+  // Optional: Animate form submit too
+  const forms = document.querySelectorAll("form:not(.no-anim)");
+  forms.forEach((form) => {
+    form.addEventListener("submit", () => {
+      document.body.classList.remove("route-in");
+      document.body.classList.add("route-out");
+    });
+  });
+</script>
+

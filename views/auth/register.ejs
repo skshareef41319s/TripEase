@@ -5,11 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Register | TripEase</title>
 
-  <!-- Bootstrap -->
+  <!-- Bootstrap & Icons -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-   <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 
   <style>
     body {
@@ -25,7 +24,7 @@
     }
 
     .brand-text {
-      font-family: pacifico, cursive;
+      font-family: 'Pacifico', cursive;
       position: absolute;
       top: 25px;
       left: 30px;
@@ -157,6 +156,19 @@
       margin-left: 8px;
     }
 
+
+  .eye-icon {
+  position: absolute;
+  right: 1.2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  color: #888;
+  z-index: 10;
+}
+
+
+
     @keyframes spin {
       0% { transform: rotate(0); }
       100% { transform: rotate(360deg); }
@@ -176,48 +188,157 @@
       </div>
     <% } %>
 
-    <form id="registerForm" action="/register" method="POST" autocomplete="off">
+    <form id="registerForm" action="/register" method="POST" autocomplete="off" onsubmit="return validatePasswordStrength()">
+
+      <!-- Username -->
       <div class="input-group">
         <i class="fas fa-user input-icon"></i>
         <input type="text" name="username" id="username" class="form-control" placeholder="Username" required />
       </div>
 
+      <!-- Email -->
       <div class="input-group">
-        <i class="fas fa-lock input-icon"></i>
-        <input type="password" name="password" id="password" class="form-control" placeholder="Password" required />
+        <i class="fas fa-envelope input-icon"></i>
+        <input type="email" name="email" id="email" class="form-control"
+          placeholder="Email Address" required
+          pattern="[a-zA-Z0-9._%+-]+@gmail\.com"
+          title="Only Gmail addresses are allowed" />
       </div>
 
-      <!-- Show Password -->
-      <div class="form-check mb-3 ps-4">
-        <input type="checkbox" class="form-check-input" id="showPassword">
-        <label for="showPassword" class="form-check-label">Show Password</label>
+      <!-- Password -->
+<div class="input-group">
+  <i class="fas fa-lock input-icon"></i>
+  <input
+    type="password"
+    name="password"
+    id="password"
+    class="form-control pe-5"  
+    placeholder="Password"
+    required
+    oninput="checkPasswordStrength()"
+  />
+  <span id="togglePassword" class="eye-icon">
+    <i class="fas fa-eye" id="eyeIcon"></i>
+  </span>
+</div>
+
+
+
+      <!-- Strength Bar -->
+      <div class="progress mb-2 ms-4 me-4" style="height: 6px;">
+        <div id="strengthBar" class="progress-bar" style="width: 0%;"></div>
       </div>
 
+      <!-- Strength Text -->
+      <div class="form-text text-center mb-2" id="strengthText" style="font-size: 0.9rem;">
+        Password strength: <span style="color: #dc3545;">Weak</span>
+      </div>
+
+      <!-- Submit -->
       <div class="d-grid">
         <button type="submit" class="btn btn-primary d-flex align-items-center justify-content-center">
           <span>Register</span>
           <div class="spinner" id="spinner"></div>
         </button>
       </div>
+
+      <!-- Generate Password -->
+      <div class="text-center mt-2">
+        <small><a href="#" onclick="generatePassword()">Generate Strong Password</a></small>
+      </div>
     </form>
 
+    <!-- Login Link -->
     <div class="login-link mt-3">
       Already have an account? <a href="/login">Login here</a>
     </div>
   </div>
 
+  <!-- Scripts -->
   <script>
-    // Toggle show password
-    document.getElementById("showPassword").addEventListener("change", function () {
-      const passInput = document.getElementById("password");
-      passInput.type = this.checked ? "text" : "password";
-    });
+   // Password strength checker
+function checkPasswordStrength() {
+  const password = document.getElementById("password").value;
+  const strengthBar = document.getElementById("strengthBar");
+  const strengthText = document.getElementById("strengthText");
+  let strength = 0;
 
-    // Spinner on form submit
-    const form = document.getElementById("registerForm");
-    form.addEventListener("submit", () => {
-      document.getElementById("spinner").style.display = "inline-block";
-    });
+  if (password.length >= 8) strength++;
+  if (/[A-Z]/.test(password)) strength++;
+  if (/[a-z]/.test(password)) strength++;
+  if (/\d/.test(password)) strength++;
+  if (/[\W_]/.test(password)) strength++;
+
+  switch (strength) {
+    case 0:
+    case 1:
+      strengthBar.style.width = "20%";
+      strengthBar.className = "progress-bar bg-danger";
+      strengthText.innerHTML = "Password strength: <span style='color: #dc3545;'>Weak</span>";
+      break;
+    case 2:
+      strengthBar.style.width = "40%";
+      strengthBar.className = "progress-bar bg-warning";
+      strengthText.innerHTML = "Password strength: <span style='color: #ffc107;'>Moderate</span>";
+      break;
+    case 3:
+      strengthBar.style.width = "60%";
+      strengthBar.className = "progress-bar bg-info";
+      strengthText.innerHTML = "Password strength: <span style='color: #17a2b8;'>Good</span>";
+      break;
+    case 4:
+    case 5:
+      strengthBar.style.width = "100%";
+      strengthBar.className = "progress-bar bg-success";
+      strengthText.innerHTML = "Password strength: <span style='color: #28a745;'>Strong</span>";
+      break;
+  }
+}
+
+// Password visibility toggle with eye icon
+const togglePassword = document.getElementById("togglePassword");
+const passwordInput = document.getElementById("password");
+const eyeIcon = document.getElementById("eyeIcon");
+
+togglePassword.addEventListener("click", function () {
+  const type = passwordInput.type === "password" ? "text" : "password";
+  passwordInput.type = type;
+  eyeIcon.classList.toggle("fa-eye");
+  eyeIcon.classList.toggle("fa-eye-slash");
+});
+
+// Spinner loader on form submit
+document.getElementById("registerForm").addEventListener("submit", () => {
+  document.getElementById("spinner").style.display = "inline-block";
+});
+
+// Generate strong password
+function generatePassword() {
+  const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$!";
+  let pass = "";
+  for (let i = 0; i < 12; i++) {
+    pass += charset.charAt(Math.floor(Math.random() * charset.length));
+  }
+  document.getElementById("password").value = pass;
+  checkPasswordStrength();
+}
+
+// Password validation before submitting
+function validatePasswordStrength() {
+  const password = document.getElementById("password").value;
+  let strength = 0;
+  if (password.length >= 8) strength++;
+  if (/[A-Z]/.test(password)) strength++;
+  if (/[a-z]/.test(password)) strength++;
+  if (/\d/.test(password)) strength++;
+  if (/[\W_]/.test(password)) strength++;
+  if (strength < 3) {
+    alert("Password too weak. Use at least 8 characters including uppercase, number and symbol.");
+    return false;
+  }
+  return true;
+}
+
   </script>
 </body>
 </html>

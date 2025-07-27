@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const path = require("path");
@@ -66,6 +67,20 @@ function isLoggedIn(req, res, next) {
   next();
 }
 
+
+const nodemailer = require("nodemailer");
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_PASS,
+  },
+});
+
+
+
+
 // ✅ Intro logic (once per session)
 app.get("/", (req, res) => {
   // Always show intro first on startup
@@ -91,22 +106,77 @@ app.get("/intro", (req, res) => {
 });
 
 
+app.get('/register', (req, res) => {
+  res.render('auth/register', { error: null }   );
+});
+
+
+
+// Handle register: STEP 1 – Save temp user and send OTP
 app.post("/register", async (req, res) => {
   try {
-    const { username, password } = req.body;
-    const user = new User({ username });
-    const registeredUser = await User.register(user, password);
-    req.login(registeredUser, err => {
-      if (err) return next(err);
-      res.redirect("/home");
+    const { username, email, password } = req.body;
+
+    // Check if username or email already exists
+    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
+    if (existingUser) {
+      return res.render("auth/register", { error: "Username or Email already exists" });
+    }
+
+    // Generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000);
+
+    // Save temp user details and OTP in session
+    req.session.tempUser = { username, email, password, otp };
+
+    // Send OTP via email
+    await transporter.sendMail({
+      from: process.env.GMAIL_USER,
+      to: email,
+      subject: "TripEase OTP Verification",
+      text: `Your OTP for TripEase registration is: ${otp}`,
     });
+
+    res.redirect("/verify-otp");
   } catch (e) {
-    const message = e.name === "UserExistsError"
-      ? "Username already exists. Please choose a different one."
-      : "Registration failed. Please try again.";
-    res.render("auth/register", { error: message });
+    res.send("Registration error: " + e.message);
   }
 });
+
+
+app.get("/verify-otp", (req, res) => {
+  res.render("auth/verifyOtp", { error: null });
+});
+
+
+app.post("/verify-otp", async (req, res) => {
+  const { enteredOtp } = req.body;
+
+  if (!req.session.tempUser) {
+    return res.redirect("/register");
+  }
+
+  const { username, email, password, otp } = req.session.tempUser;
+
+  if (parseInt(enteredOtp) === otp) {
+    try {
+      const user = new User({ username, email });
+      const registeredUser = await User.register(user, password);
+      
+      req.login(registeredUser, (err) => {
+        req.session.tempUser = null;
+        if (err) return res.send("Login error after registration.");
+        return res.render("auth/successRegister");
+      });
+    } catch (e) {
+      return res.send("Registration failed after OTP: " + e.message);
+    }
+  } else {
+    return res.render("auth/verifyOtp", { error: "Invalid OTP. Please try again." });
+  }
+});
+
+
 
 app.get("/login", (req, res) => {
   const error = req.session.loginError || null;
@@ -125,7 +195,7 @@ app.post("/login", (req, res, next) => {
         req.session.loginError = "Login failed. Please try again.";
         return res.redirect("/login");
       }
-      res.redirect("/home");
+      return res.render("auth/successLogin");
     });
   })(req, res, next);
 });
@@ -136,6 +206,13 @@ app.get("/logout", (req, res) => {
     res.redirect("/intro");
   });
 });
+
+//forgot password
+app.get("/forgot-password", (req, res) => {
+  res.send("Forgot Password Page - Not Implemented Yet");
+});
+
+
 
 // ✅ Home Page
 app.get("/home", isLoggedIn, (req, res) => {
@@ -272,7 +349,7 @@ app.get("/profile", isLoggedIn, async (req, res) => {
     res.render("listings/profile", {
       user: {
         name: user.username,
-        email: `${user.username}@tripease.com`,
+        email: user.email, // ✅ Use actual email now
         listings: user.likedListings,
         bookings: user.bookings
       }
@@ -282,6 +359,7 @@ app.get("/profile", isLoggedIn, async (req, res) => {
     res.status(500).send("Error loading profile");
   }
 });
+
 
 // ✅ Cancel Booking
 app.delete("/bookings/:id", isLoggedIn, async (req, res) => {

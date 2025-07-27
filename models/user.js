@@ -1,13 +1,14 @@
-// models/user.js
 const mongoose = require("mongoose");
 const passportLocalMongoose = require("passport-local-mongoose");
 
 const userSchema = new mongoose.Schema({
   email: {
     type: String,
-    required: false,
-    trim: true
-    // Optional: add validation like match: /@.+\..+/
+    required: [true, "Email is required."],
+    unique: true,
+    trim: true,
+    lowercase: true,
+    match: [/.+@.+\..+/, "Please enter a valid email address."]
   },
   likedListings: [
     {
@@ -27,7 +28,9 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-// Plug in passport-local-mongoose to handle username + password auth
-userSchema.plugin(passportLocalMongoose);
+// Adds username, hash, salt fields + register, authenticate methods
+userSchema.plugin(passportLocalMongoose, {
+  usernameField: 'username' // still using username for login, not email
+});
 
 module.exports = mongoose.model("User", userSchema);
