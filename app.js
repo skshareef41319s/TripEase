@@ -13,6 +13,8 @@ const Listing = require("./models/listing");
 const Review = require("./models/review");
 const Booking = require("./models/booking");
 const User = require("./models/user");
+const multer = require("multer");
+const fs = require("fs");
 
 const app = express();
 const port = 8080;
@@ -68,15 +70,23 @@ function isLoggedIn(req, res, next) {
 }
 
 
-const nodemailer = require("nodemailer");
+// ✅ Multer Setup for File Uploads
+const uploadsDir = path.join(__dirname, "public/uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_PASS,
+// Multer config
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "public/uploads");
   },
+  filename: function (req, file, cb) {
+    const uniqueName = Date.now() + "-" + file.originalname;
+    cb(null, uniqueName);
+  }
 });
+const upload = multer({ storage });
 
 
 
@@ -229,17 +239,38 @@ app.get("/listings/new", isLoggedIn, (req, res) => {
   res.render("listings/new");
 });
 
-app.post("/listings", isLoggedIn, async (req, res) => {
-  const newListing = new Listing({
-    title: req.body.title,
-    description: req.body.description,
-    price: req.body.price,
-    location: req.body.location,
-    country: req.body.country,
-    image: req.body.image || "https://via.placeholder.com/600x400?text=No+Image"
-  });
-  await newListing.save();
-  res.redirect("/listings");
+app.post("/listings", isLoggedIn, upload.single("imageFile"), async (req, res) => {
+  try {
+    const {
+      title,
+      description,
+      price,
+      location,
+      country,
+      image: imageUrl
+    } = req.body;
+
+    let finalImage = imageUrl;
+
+    if (!imageUrl && req.file) {
+      finalImage = `/uploads/${req.file.filename}`; // static path
+    }
+
+    const newListing = new Listing({
+      title,
+      description,
+      price,
+      location,
+      country,
+      image: finalImage || "https://via.placeholder.com/600x400?text=No+Image"
+    });
+
+    await newListing.save();
+    res.redirect("/listings");
+  } catch (e) {
+    console.error("❌ Listing creation failed:", e);
+    res.status(500).send("Something went wrong.");
+  }
 });
 
 app.get("/listings/:id", isLoggedIn, async (req, res) => {
