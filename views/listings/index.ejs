@@ -2,20 +2,30 @@
 
 <body>
   <div class="container">
-    <h1 class="main-title">🌍 All Destinations</h1>
+  <h1 class="main-title">🌍 All Destinations</h1>
 
-    <div class="btn-group">
-      <a href="/listings/new" class="btn">Create Your Destination</a>
-    </div>
+  <div class="btn-group">
+    <a href="/listings/new" class="btn">Create Your Destination</a>
+  </div>
 
-    <% if (allListings.length > 0) { %>
-      <div class="card-grid">
-        <% allListings.forEach((listing) => { 
-             const isLiked = currentUser && currentUser.likedListings.includes(listing._id.toString()); 
-        %>
+  <% if (allListings.length > 0) { %>
+    <div class="card-grid">
+      <% allListings.forEach((listing) => { 
+           const isLiked = currentUser && currentUser.likedListings.includes(listing._id.toString()); 
+           
+           // Determine image URL
+           let imageUrl;
+           if (listing.image && listing.image.url) {
+             imageUrl = listing.image.url; // Cloud/Static
+           } else if (listing.image && listing.image.filename) {
+             imageUrl = `/uploads/${listing.image.filename}`; // Local upload
+           } else {
+             imageUrl = '/images/placeholder.jpg'; // Fallback
+           }
+      %>
         <div class="card">
           
-          <!-- Dynamic Like/Unlike Button -->
+          <!-- Like/Unlike Button -->
           <form 
             action="/listings/<%= listing._id %>/<%= isLiked ? 'unlike' : 'like' %>" 
             method="POST" 
@@ -31,18 +41,20 @@
             </button>
           </form>
 
-          <img src="<%= listing.image.url %>" alt="<%= listing.title %>" class="card-image" />
+          <!-- Show image -->
+          <img src="<%= imageUrl %>" alt="<%= listing.title %>" class="card-image" loading="lazy" />
+          
           <div class="card-content">
             <h2 class="card-title"><%= listing.title %></h2>
             <a href="/listings/<%= listing._id %>" class="btn btn-small">View Details</a>
           </div>
         </div>
-        <% }); %>
-      </div>
-    <% } else { %>
-      <p class="no-entries">No entries available at the moment.</p>
-    <% } %>
-  </div>
+      <% }); %>
+    </div>
+  <% } else { %>
+    <p class="no-entries">No entries available at the moment.</p>
+  <% } %>
+</div>
 
   <!-- Scroll to Top Button -->
   <button id="scrollTopBtn" title="Go to top" aria-label="Go to top">
@@ -52,6 +64,7 @@
   </button>
 
   <style>
+    /* (Your full CSS from before is kept unchanged) */
     body {
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       background-color: #f9f9f9;
@@ -101,7 +114,7 @@
     .card-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 3rem; /* Increased gap for more space */
+      gap: 3rem;
     }
 
     @media (max-width: 992px) {
@@ -180,7 +193,7 @@
       margin-top: 3rem;
     }
 
-    /* Heart like button */
+    /* Like Button */
     .like-btn {
       position: absolute;
       top: 12px;
@@ -221,7 +234,7 @@
       stroke: #ff4d6d;
     }
 
-    /* Scroll to top button modern style */
+    /* Scroll to Top */
     #scrollTopBtn {
       position: fixed;
       bottom: 40px;
@@ -234,7 +247,7 @@
       height: 50px;
       border-radius: 50%;
       cursor: pointer;
-      display: none; /* hidden initially */
+      display: none;
       align-items: center;
       justify-content: center;
       box-shadow: 0 6px 12px rgba(53, 122, 189, 0.5);
@@ -248,26 +261,17 @@
       box-shadow: 0 8px 16px rgba(53, 122, 189, 0.7);
     }
 
-    /* Pulse animation */
     @keyframes pulse {
-      0%,
-      100% {
-        box-shadow: 0 6px 12px rgba(53, 122, 189, 0.5);
-      }
-      50% {
-        box-shadow: 0 10px 20px rgba(53, 122, 189, 0.7);
-      }
+      0%, 100% { box-shadow: 0 6px 12px rgba(53, 122, 189, 0.5); }
+      50% { box-shadow: 0 10px 20px rgba(53, 122, 189, 0.7); }
     }
   </style>
 
-  <!-- Script -->
   <script>
     const scrollTopBtn = document.getElementById("scrollTopBtn");
-
     window.addEventListener("scroll", () => {
       scrollTopBtn.style.display = window.scrollY > 300 ? "flex" : "none";
     });
-
     scrollTopBtn.addEventListener("click", () => {
       window.scrollTo({ top: 0, behavior: "smooth" });
     });

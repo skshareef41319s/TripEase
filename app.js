@@ -8,13 +8,14 @@ const session = require("express-session");
 const MongoStore = require("connect-mongo");
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
+const multer = require("multer");
+const fs = require("fs");
 
+// Models
 const Listing = require("./models/listing");
 const Review = require("./models/review");
 const Booking = require("./models/booking");
 const User = require("./models/user");
-const multer = require("multer");
-const fs = require("fs");
 
 const app = express();
 const port = 8080;
@@ -41,7 +42,7 @@ app.use(session({
   saveUninitialized: false,
   store: MongoStore.create({
     mongoUrl: "mongodb://127.0.0.1:27017/TripEase",
-    ttl: 60 * 60 * 24, // 1 day
+    ttl: 60 * 60 * 24,
     autoRemove: 'native'
   }),
   cookie: {
@@ -57,18 +58,17 @@ passport.use(new LocalStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
-// ✅ Make user available to templates
+// ✅ Current user middleware
 app.use((req, res, next) => {
   res.locals.currentUser = req.user;
   next();
 });
 
-// ✅ Middleware to protect routes
+// ✅ Auth check middleware
 function isLoggedIn(req, res, next) {
   if (!req.isAuthenticated()) return res.redirect("/login");
   next();
 }
-
 
 // ✅ Multer Setup for File Uploads
 const uploadsDir = path.join(__dirname, "public/uploads");
@@ -76,33 +76,20 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Multer config
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "public/uploads");
-  },
-  filename: function (req, file, cb) {
-    const uniqueName = Date.now() + "-" + file.originalname;
-    cb(null, uniqueName);
-  }
+  destination: (req, file, cb) => cb(null, "public/uploads"),
+  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname)
 });
 const upload = multer({ storage });
 
-
-
-
-// ✅ Intro logic (once per session)
+// ✅ Intro & Auth
 app.get("/", (req, res) => {
-  // Always show intro first on startup
   if (!req.session.introShown) {
     req.session.introShown = true;
     return res.redirect("/intro");
   }
-
-  // After intro shown once in the session
   return req.isAuthenticated() ? res.redirect("/home") : res.redirect("/login");
 });
-
 
 app.get("/intro", (req, res) => {
   if (req.isAuthenticated()) return res.redirect("/home");
@@ -110,36 +97,22 @@ app.get("/intro", (req, res) => {
   res.render("auth/intro");
 });
 
-// ✅ Auth Routes
-app.get("/intro", (req, res) => {
-  res.render("auth/intro"); // Show the intro screen
+app.get("/register", (req, res) => {
+  res.render("auth/register", { error: null });
 });
 
-
-app.get('/register', (req, res) => {
-  res.render('auth/register', { error: null }   );
-});
-
-
-
-// Handle register: STEP 1 – Save temp user and send OTP
+// Register with OTP
 app.post("/register", async (req, res) => {
   try {
     const { username, email, password } = req.body;
-
-    // Check if username or email already exists
     const existingUser = await User.findOne({ $or: [{ username }, { email }] });
     if (existingUser) {
       return res.render("auth/register", { error: "Username or Email already exists" });
     }
-
-    // Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000);
-
-    // Save temp user details and OTP in session
     req.session.tempUser = { username, email, password, otp };
 
-    // Send OTP via email
+    // NOTE: transporter must be set up before this can send emails
     await transporter.sendMail({
       from: process.env.GMAIL_USER,
       to: email,
@@ -153,40 +126,31 @@ app.post("/register", async (req, res) => {
   }
 });
 
-
 app.get("/verify-otp", (req, res) => {
   res.render("auth/verifyOtp", { error: null });
 });
 
-
 app.post("/verify-otp", async (req, res) => {
   const { enteredOtp } = req.body;
-
-  if (!req.session.tempUser) {
-    return res.redirect("/register");
-  }
+  if (!req.session.tempUser) return res.redirect("/register");
 
   const { username, email, password, otp } = req.session.tempUser;
-
   if (parseInt(enteredOtp) === otp) {
     try {
       const user = new User({ username, email });
       const registeredUser = await User.register(user, password);
-      
       req.login(registeredUser, (err) => {
         req.session.tempUser = null;
         if (err) return res.send("Login error after registration.");
-        return res.render("auth/successRegister");
+        res.render("auth/successRegister");
       });
     } catch (e) {
-      return res.send("Registration failed after OTP: " + e.message);
+      res.send("Registration failed after OTP: " + e.message);
     }
   } else {
-    return res.render("auth/verifyOtp", { error: "Invalid OTP. Please try again." });
+    res.render("auth/verifyOtp", { error: "Invalid OTP. Please try again." });
   }
 });
-
-
 
 app.get("/login", (req, res) => {
   const error = req.session.loginError || null;
@@ -205,7 +169,7 @@ app.post("/login", (req, res, next) => {
         req.session.loginError = "Login failed. Please try again.";
         return res.redirect("/login");
       }
-      return res.render("auth/successLogin");
+      res.render("auth/successLogin");
     });
   })(req, res, next);
 });
@@ -217,14 +181,11 @@ app.get("/logout", (req, res) => {
   });
 });
 
-//forgot password
 app.get("/forgot-password", (req, res) => {
   res.send("Forgot Password Page - Not Implemented Yet");
 });
 
-
-
-// ✅ Home Page
+// ✅ Pages
 app.get("/home", isLoggedIn, (req, res) => {
   res.render("listings/home");
 });
@@ -241,19 +202,14 @@ app.get("/listings/new", isLoggedIn, (req, res) => {
 
 app.post("/listings", isLoggedIn, upload.single("imageFile"), async (req, res) => {
   try {
-    const {
-      title,
-      description,
-      price,
-      location,
-      country,
-      image: imageUrl
-    } = req.body;
+    const { title, description, price, location, country } = req.body;
 
-    let finalImage = imageUrl;
-
-    if (!imageUrl && req.file) {
-      finalImage = `/uploads/${req.file.filename}`; // static path
+    let image = { filename: "", url: "" };
+    if (req.file) {
+      image.filename = req.file.filename;
+      image.url = `/uploads/${req.file.filename}`;
+    } else {
+      image.url = "https://via.placeholder.com/600x400?text=No+Image";
     }
 
     const newListing = new Listing({
@@ -262,7 +218,7 @@ app.post("/listings", isLoggedIn, upload.single("imageFile"), async (req, res) =
       price,
       location,
       country,
-      image: finalImage || "https://via.placeholder.com/600x400?text=No+Image"
+      image
     });
 
     await newListing.save();
@@ -283,12 +239,28 @@ app.get("/listings/:id/edit", isLoggedIn, async (req, res) => {
   res.render("listings/edit", { listing });
 });
 
-app.put("/listings/:id", isLoggedIn, async (req, res) => {
-  const updatedListing = await Listing.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true
-  });
-  res.redirect(`/listings/${updatedListing._id}`);
+app.put("/listings/:id", isLoggedIn, upload.single("imageFile"), async (req, res) => {
+  try {
+    const { title, description, price, location, country } = req.body;
+    const listing = await Listing.findById(req.params.id);
+
+    if (req.file) {
+      listing.image.filename = req.file.filename;
+      listing.image.url = `/uploads/${req.file.filename}`;
+    }
+
+    listing.title = title;
+    listing.description = description;
+    listing.price = price;
+    listing.location = location;
+    listing.country = country;
+
+    await listing.save();
+    res.redirect(`/listings/${listing._id}`);
+  } catch (err) {
+    console.error("❌ Update failed:", err);
+    res.status(500).send("Update failed");
+  }
 });
 
 app.delete("/listings/:id", isLoggedIn, async (req, res) => {
@@ -345,7 +317,6 @@ app.post("/listings/:id/book", isLoggedIn, async (req, res) => {
   });
 
   await booking.save();
-
   req.user.bookings.push(booking._id);
   await req.user.save();
 
@@ -370,7 +341,7 @@ app.get("/search", isLoggedIn, async (req, res) => {
   }
 });
 
-// ✅ Profile Page
+// ✅ Profile
 app.get("/profile", isLoggedIn, async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
@@ -380,7 +351,7 @@ app.get("/profile", isLoggedIn, async (req, res) => {
     res.render("listings/profile", {
       user: {
         name: user.username,
-        email: user.email, // ✅ Use actual email now
+        email: user.email,
         listings: user.likedListings,
         bookings: user.bookings
       }
@@ -391,24 +362,15 @@ app.get("/profile", isLoggedIn, async (req, res) => {
   }
 });
 
-
 // ✅ Cancel Booking
 app.delete("/bookings/:id", isLoggedIn, async (req, res) => {
   const bookingId = req.params.id;
-
-  // Remove booking from user's list
-  await User.findByIdAndUpdate(req.user._id, {
-    $pull: { bookings: bookingId }
-  });
-
-  // Delete the booking itself
+  await User.findByIdAndUpdate(req.user._id, { $pull: { bookings: bookingId } });
   await Booking.findByIdAndDelete(bookingId);
-
   res.redirect("/profile");
 });
 
-
-// ✅ Server Listen
+// ✅ Start server
 app.listen(port, () => {
   console.log(`🚀 Server running at http://localhost:${port}`);
 });
