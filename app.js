@@ -10,6 +10,16 @@ const passport = require("passport");
 const LocalStrategy = require("passport-local");
 const multer = require("multer");
 const fs = require("fs");
+const nodemailer = require("nodemailer"); // ✅ Added Nodemailer
+
+// ✅ Nodemailer Transporter Setup
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.GMAIL_USER, // Gmail ID from .env
+    pass: process.env.GMAIL_PASS  // Gmail App Password from .env
+  }
+});
 
 // Models
 const Listing = require("./models/listing");
@@ -21,7 +31,9 @@ const app = express();
 const port = 8080;
 
 // ✅ MongoDB Connection
-mongoose.connect("mongodb://127.0.0.1:27017/TripEase")
+const dbUrl = process.env.ATLASDB_URL || "mongodb://127.0.0.1:27017/TripEase";
+
+mongoose.connect(dbUrl)
   .then(() => console.log("✅ MongoDB Connected"))
   .catch(err => console.error("❌ MongoDB Connection Error:", err));
 
@@ -37,16 +49,16 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // ✅ Session & Store
 app.use(session({
-  secret: "trip-ease-secret",
+  secret: process.env.SESSION_SECRET || "trip-ease-secret",
   resave: false,
   saveUninitialized: false,
   store: MongoStore.create({
-    mongoUrl: "mongodb://127.0.0.1:27017/TripEase",
-    ttl: 60 * 60 * 24,
+    mongoUrl: dbUrl,
+    ttl: 60 * 60 * 24, // 1 day
     autoRemove: 'native'
   }),
   cookie: {
-    maxAge: 1000 * 60 * 60 * 24,
+    maxAge: 1000 * 60 * 60 * 24, // 1 day
     httpOnly: true
   }
 }));
@@ -112,7 +124,7 @@ app.post("/register", async (req, res) => {
     const otp = Math.floor(100000 + Math.random() * 900000);
     req.session.tempUser = { username, email, password, otp };
 
-    // NOTE: transporter must be set up before this can send emails
+    // ✅ Sending OTP Email
     await transporter.sendMail({
       from: process.env.GMAIL_USER,
       to: email,
