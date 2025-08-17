@@ -1,10 +1,11 @@
 <% layout("/layouts/boilerplate") %>
 <body>
+  <!-- Hero Section -->
   <section class="hero-section">
     <div class="hero-content">
-      <h1>Welcome to TripEase 🌍</h1>
+      <h1>Welcome to TripEase 🌏</h1>
       <p class="tagline">Discover. Plan. Explore.</p>
-      <p class="subtitle">Your gateway to incredible travel experiences worldwide.</p>
+      <p class="subtitle">Discover amazing destinations, create unforgettable memories, and let each journey tell your unique story.</p>
       
       <div class="hero-buttons">
         <a href="/listings" class="btn btn-primary">Discover Destinations</a>
@@ -13,142 +14,93 @@
     </div>
   </section>
 
-  <!-- Floating card with elegant animation -->
+  <!-- Floating Card Section -->
   <section class="floating-card-section">
     <div class="card">
-      <h2>Explore Stunning Destinations</h2>
-      <p>Discover handpicked travel spots tailored just for you. Start your journey now and unlock unforgettable experiences.</p>
-      <a href="/listings" class="btn btn-primary">Start Your Journey</a>
+      <h2>Handpicked Destinations Just for You</h2>
+      <p>Our team curates the most breathtaking spots worldwide. Explore top destinations, plan your itinerary, and create memories that last a lifetime.</p>
+      <a href="/listings" class="btn btn-primary">Start Exploring</a>
     </div>
   </section>
+
+  <!-- Floating Travel Emojis -->
+  <div class="floating-emojis">
+    <span class="emoji">🛫</span>
+    <span class="emoji">🧳</span>
+    <span class="emoji">🗺️</span>
+    <span class="emoji">🌍</span>
+    <span class="emoji">🏖️</span>
+    <span class="emoji">⛰️</span>
+    <span class="emoji">🚤</span>
+  </div>
 </body>
 
 <style>
   body {
     font-family: 'Poppins', sans-serif;
-    background: #f1f4f9;
+    background: linear-gradient(180deg,#f1f4f9,#e0f7fa);
     margin: 0;
     padding: 0;
+    overflow-x: hidden;
+    position: relative;
   }
 
+  /* Hero Section */
   .hero-section {
-  min-height: 80vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: linear-gradient(135deg, #457b9d, #1d3557);
-  color: white;
-  text-align: center;
-  padding: 2rem;
-  border-radius: 2rem;
-  margin: 1rem;
-}
-
-
-  .hero-content h1 {
-    font-size: 3rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .tagline {
-    font-weight: 600;
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-    letter-spacing: 1.2px;
-  }
-
-  .subtitle {
-    font-weight: 300;
-    font-size: 1.1rem;
-    margin-bottom: 2rem;
-    max-width: 500px;
-    margin-left: auto;
-    margin-right: auto;
-    opacity: 0.85;
-  }
-
-  .hero-buttons .btn {
-    font-weight: 600;
-    padding: 0.75rem 2rem;
-    border-radius: 2rem;
-    font-size: 1.1rem;
-    transition: background-color 0.3s ease, color 0.3s ease;
-    margin: 0 0.5rem;
-    text-decoration: none;
-  }
-
-  .btn-primary {
-    background-color: #a8dadc; /* soft teal */
-    color: #1d3557; /* deep navy */
-    border: none;
-    transition: background-color 0.3s ease, color 0.3s ease;
-  }
-
-  .btn-primary:hover {
-    background-color: #1d3557; /* deep navy */
-    color: #a8dadc; /* soft teal */
-  }
-
-  .btn-secondary {
-    background-color: transparent;
-    border: 2px solid #a8dadc; /* soft teal */
-    color: #a8dadc;
-    transition: background-color 0.3s ease, color 0.3s ease;
-  }
-
-  .btn-secondary:hover {
-    background-color: #a8dadc;
-    color: #1d3557;
-  }
-
-  /* Floating Card Section */
-  .floating-card-section {
+    min-height: 80vh;
     display: flex;
     justify-content: center;
-    padding: 3rem 1rem 6rem; /* bottom padding for breathing room */
-    background: #f1f4f9;
-  }
-
-  .card {
-    background: white;
-    border-radius: 1rem;
-    box-shadow: 0 8px 20px rgba(29, 53, 87, 0.15);
-    padding: 2.5rem 3rem;
-    max-width: 420px;
+    align-items: center;
+    background: linear-gradient(135deg, #1d3557, #457b9d);
+    color: white;
     text-align: center;
-    animation: float 6s ease-in-out infinite;
-    transition: transform 0.5s ease, box-shadow 0.5s ease;
+    padding: 3rem 2rem;
+    border-radius: 2rem;
+    margin: 1rem auto;
+    position: relative;
+    overflow: hidden;
+    animation: fadeIn 1.5s ease forwards;
   }
 
-  .card h2 {
-    color: #1d3557;
-    margin-bottom: 1rem;
-    font-weight: 700;
-    font-size: 1.8rem;
-  }
+  .hero-content h1 { font-size: 3rem; margin-bottom: 0.5rem; letter-spacing: 1px; animation: slideInDown 1s ease forwards; }
+  .tagline { font-weight: 600; font-size: 1.5rem; margin-bottom: 1rem; letter-spacing: 1.5px; animation: fadeIn 1.5s ease forwards 0.5s; opacity: 0; }
+  .subtitle { font-weight: 300; font-size: 1.1rem; max-width: 550px; margin: 0.5rem auto 2rem; opacity: 0.85; animation: fadeIn 1.5s ease forwards 1s; }
 
-  .card p {
-    color: #457b9d;
-    font-weight: 400;
-    font-size: 1.1rem;
-    margin-bottom: 2rem;
-    line-height: 1.5;
-  }
+  .hero-buttons .btn { font-weight: 600; padding: 0.75rem 2rem; border-radius: 2rem; font-size: 1.1rem; margin: 0 0.5rem; text-decoration: none; transition: all 0.3s ease; transform: translateY(0); }
+  .btn-primary { background-color: #f1faee; color: #1d3557; }
+  .btn-primary:hover { background-color: #1d3557; color: #f1faee; transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+  .btn-secondary { background-color: transparent; border: 2px solid #f1faee; color: #f1faee; }
+  .btn-secondary:hover { background-color: #f1faee; color: #1d3557; transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
 
-  /* Floating animation */
-  @keyframes float {
-    0%, 100% {
-      transform: translateY(0);
-      box-shadow: 0 8px 20px rgba(29, 53, 87, 0.15);
-    }
-    50% {
-      transform: translateY(-15px);
-      box-shadow: 0 16px 30px rgba(29, 53, 87, 0.25);
-    }
-  }
+  /* Floating Card Section */
+  .floating-card-section { display: flex; justify-content: center; padding: 3rem 1rem 6rem; }
+  .card { background: white; border-radius: 1rem; box-shadow: 0 12px 28px rgba(29, 53, 87, 0.15); padding: 2.5rem 3rem; max-width: 450px; text-align: center; animation: float 6s ease-in-out infinite; transition: transform 0.5s ease, box-shadow 0.5s ease; }
+  .card h2 { color: #1d3557; margin-bottom: 1rem; font-weight: 700; font-size: 1.9rem; animation: fadeIn 1s ease forwards 0.5s; opacity: 0; }
+  .card p { color: #457b9d; font-weight: 400; font-size: 1.1rem; margin-bottom: 2rem; line-height: 1.5; }
+  .card:hover { transform: translateY(-10px) scale(1.05); box-shadow: 0 20px 40px rgba(29, 53, 87, 0.35); }
 
-  .card:hover {
-    transform: translateY(-10px) scale(1.05);
-    box-shadow: 0 20px 40px rgba(29, 53, 87, 0.35);
+  /* Floating Animation */
+  @keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-15px);} }
+  @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+  @keyframes slideInDown { from{transform:translateY(-20px);opacity:0;} to{transform:translateY(0);opacity:1;} }
+
+  /* Floating Emojis */
+  .floating-emojis span {
+    position: absolute;
+    font-size: 2rem;
+    animation: floatEmoji 8s ease-in-out infinite;
+    opacity: 0.8;
+  }
+  .floating-emojis span:nth-child(1){ top: 15%; left: 10%; animation-delay: 0s; }
+  .floating-emojis span:nth-child(2){ top: 25%; left: 80%; animation-delay: 2s; }
+  .floating-emojis span:nth-child(3){ top: 50%; left: 20%; animation-delay: 4s; }
+  .floating-emojis span:nth-child(4){ top: 65%; left: 75%; animation-delay: 6s; }
+  .floating-emojis span:nth-child(5){ top: 30%; left: 40%; animation-delay: 1s; }
+  .floating-emojis span:nth-child(6){ top: 55%; left: 60%; animation-delay: 3s; }
+  .floating-emojis span:nth-child(7){ top: 70%; left: 30%; animation-delay: 5s; }
+
+  @keyframes floatEmoji {
+    0%,100%{ transform: translateY(0) rotate(0deg); }
+    50%{ transform: translateY(-25px) rotate(15deg); }
   }
 </style>

@@ -10,14 +10,14 @@ const passport = require("passport");
 const LocalStrategy = require("passport-local");
 const multer = require("multer");
 const fs = require("fs");
-const nodemailer = require("nodemailer"); // ✅ Added Nodemailer
+const nodemailer = require("nodemailer");
 
-// ✅ Nodemailer Transporter Setup
+// Nodemailer Transporter Setup
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.GMAIL_USER, // Gmail ID from .env
-    pass: process.env.GMAIL_PASS  // Gmail App Password from .env
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_PASS
   }
 });
 
@@ -30,63 +30,57 @@ const User = require("./models/user");
 const app = express();
 const port = 8080;
 
-// ✅ MongoDB Connection
+// MongoDB Connection
 const dbUrl = process.env.ATLASDB_URL || "mongodb://127.0.0.1:27017/TripEase";
 
 mongoose.connect(dbUrl)
   .then(() => console.log("✅ MongoDB Connected"))
   .catch(err => console.error("❌ MongoDB Connection Error:", err));
 
-// ✅ View Engine Setup
+// View Engine
 app.engine("ejs", ejsMate);
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
-// ✅ Middleware
+// Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 app.use(express.static(path.join(__dirname, "public")));
 
-// ✅ Session & Store
+// Session & Store
 app.use(session({
   secret: process.env.SESSION_SECRET || "trip-ease-secret",
   resave: false,
   saveUninitialized: false,
   store: MongoStore.create({
     mongoUrl: dbUrl,
-    ttl: 60 * 60 * 24, // 1 day
-    autoRemove: 'native'
+    ttl: 60 * 60 * 24
   }),
-  cookie: {
-    maxAge: 1000 * 60 * 60 * 24, // 1 day
-    httpOnly: true
-  }
+  cookie: { maxAge: 1000 * 60 * 60 * 24, httpOnly: true }
 }));
 
-// ✅ Passport Setup
+// Passport
 app.use(passport.initialize());
 app.use(passport.session());
 passport.use(new LocalStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
-// ✅ Current user middleware
+// Current User Middleware
 app.use((req, res, next) => {
   res.locals.currentUser = req.user;
   next();
 });
 
-// ✅ Auth check middleware
+// Auth Check
 function isLoggedIn(req, res, next) {
   if (!req.isAuthenticated()) return res.redirect("/login");
   next();
 }
 
-// ✅ Multer Setup for File Uploads
+// Multer Setup
 const uploadsDir = path.join(__dirname, "public/uploads");
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, "public/uploads"),
@@ -94,7 +88,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// ✅ Intro & Auth
+// Intro & Auth
 app.get("/", (req, res) => {
   if (!req.session.introShown) {
     req.session.introShown = true;
@@ -113,18 +107,15 @@ app.get("/register", (req, res) => {
   res.render("auth/register", { error: null });
 });
 
-// Register with OTP
 app.post("/register", async (req, res) => {
   try {
     const { username, email, password } = req.body;
     const existingUser = await User.findOne({ $or: [{ username }, { email }] });
-    if (existingUser) {
-      return res.render("auth/register", { error: "Username or Email already exists" });
-    }
+    if (existingUser) return res.render("auth/register", { error: "Username or Email already exists" });
+
     const otp = Math.floor(100000 + Math.random() * 900000);
     req.session.tempUser = { username, email, password, otp };
 
-    // ✅ Sending OTP Email
     await transporter.sendMail({
       from: process.env.GMAIL_USER,
       to: email,
@@ -193,24 +184,16 @@ app.get("/logout", (req, res) => {
   });
 });
 
-app.get("/forgot-password", (req, res) => {
-  res.send("Forgot Password Page - Not Implemented Yet");
-});
+// Pages
+app.get("/home", isLoggedIn, (req, res) => res.render("listings/home"));
 
-// ✅ Pages
-app.get("/home", isLoggedIn, (req, res) => {
-  res.render("listings/home");
-});
-
-// ✅ Listings
+// Listings CRUD
 app.get("/listings", isLoggedIn, async (req, res) => {
   const allListings = await Listing.find();
   res.render("listings/index", { allListings });
 });
 
-app.get("/listings/new", isLoggedIn, (req, res) => {
-  res.render("listings/new");
-});
+app.get("/listings/new", isLoggedIn, (req, res) => res.render("listings/new"));
 
 app.post("/listings", isLoggedIn, upload.single("imageFile"), async (req, res) => {
   try {
@@ -224,15 +207,7 @@ app.post("/listings", isLoggedIn, upload.single("imageFile"), async (req, res) =
       image.url = "https://via.placeholder.com/600x400?text=No+Image";
     }
 
-    const newListing = new Listing({
-      title,
-      description,
-      price,
-      location,
-      country,
-      image
-    });
-
+    const newListing = new Listing({ title, description, price, location, country, image });
     await newListing.save();
     res.redirect("/listings");
   } catch (e) {
@@ -241,8 +216,13 @@ app.post("/listings", isLoggedIn, upload.single("imageFile"), async (req, res) =
   }
 });
 
+// SHOW listing with reviews and author populated
 app.get("/listings/:id", isLoggedIn, async (req, res) => {
-  const listing = await Listing.findById(req.params.id).populate("reviews");
+  const listing = await Listing.findById(req.params.id)
+    .populate({
+      path: "reviews",
+      populate: { path: "author", select: "username" }
+    });
   res.render("listings/show", { listing });
 });
 
@@ -280,10 +260,11 @@ app.delete("/listings/:id", isLoggedIn, async (req, res) => {
   res.redirect("/listings");
 });
 
-// ✅ Reviews
+// Reviews
 app.post("/listings/:id/reviews", isLoggedIn, async (req, res) => {
   const listing = await Listing.findById(req.params.id);
   const review = new Review(req.body.review);
+  review.author = req.user._id;   // link author
   await review.save();
   listing.reviews.push(review);
   await listing.save();
@@ -291,14 +272,16 @@ app.post("/listings/:id/reviews", isLoggedIn, async (req, res) => {
 });
 
 app.delete("/listings/:listingId/reviews/:reviewId", isLoggedIn, async (req, res) => {
-  await Listing.findByIdAndUpdate(req.params.listingId, {
-    $pull: { reviews: req.params.reviewId }
-  });
+  const review = await Review.findById(req.params.reviewId);
+  if (!review.author.equals(req.user._id)) {
+    return res.status(403).send("❌ You cannot delete this review");
+  }
+  await Listing.findByIdAndUpdate(req.params.listingId, { $pull: { reviews: req.params.reviewId } });
   await Review.findByIdAndDelete(req.params.reviewId);
   res.redirect(`/listings/${req.params.listingId}`);
 });
 
-// ✅ Likes
+// Likes
 app.post("/listings/:id/like", isLoggedIn, async (req, res) => {
   const { id } = req.params;
   if (!req.user.likedListings.includes(id)) {
@@ -310,13 +293,13 @@ app.post("/listings/:id/like", isLoggedIn, async (req, res) => {
 
 app.post("/listings/:id/unlike", isLoggedIn, async (req, res) => {
   req.user.likedListings = req.user.likedListings.filter(
-    (listingId) => listingId.toString() !== req.params.id
+    listingId => listingId.toString() !== req.params.id
   );
   await req.user.save();
   res.redirect(`/listings/${req.params.id}`);
 });
 
-// ✅ Bookings
+// Bookings
 app.post("/listings/:id/book", isLoggedIn, async (req, res) => {
   const listing = await Listing.findById(req.params.id);
   const { date, guests } = req.body;
@@ -331,11 +314,9 @@ app.post("/listings/:id/book", isLoggedIn, async (req, res) => {
   await booking.save();
   req.user.bookings.push(booking._id);
   await req.user.save();
-
   res.redirect("/profile");
 });
 
-// ✅ Search
 app.get("/search", isLoggedIn, async (req, res) => {
   const query = req.query.q.trim();
   const listings = await Listing.find({
@@ -346,14 +327,11 @@ app.get("/search", isLoggedIn, async (req, res) => {
     ]
   });
 
-  if (listings.length === 1) {
-    return res.redirect(`/listings/${listings[0]._id}`);
-  } else {
-    return res.render("listings/searchResults", { listings, query });
-  }
+  if (listings.length === 1) return res.redirect(`/listings/${listings[0]._id}`);
+  else return res.render("listings/searchResults", { listings, query });
 });
 
-// ✅ Profile
+// Profile
 app.get("/profile", isLoggedIn, async (req, res) => {
   try {
     const user = await User.findById(req.user._id)
@@ -374,7 +352,7 @@ app.get("/profile", isLoggedIn, async (req, res) => {
   }
 });
 
-// ✅ Cancel Booking
+// Cancel Booking
 app.delete("/bookings/:id", isLoggedIn, async (req, res) => {
   const bookingId = req.params.id;
   await User.findByIdAndUpdate(req.user._id, { $pull: { bookings: bookingId } });
@@ -382,7 +360,5 @@ app.delete("/bookings/:id", isLoggedIn, async (req, res) => {
   res.redirect("/profile");
 });
 
-// ✅ Start server
-app.listen(port, () => {
-  console.log(`🚀 Server running at http://localhost:${port}`);
-});
+// Start server
+app.listen(port, () => console.log(`🚀 Server running at http://localhost:${port}`));

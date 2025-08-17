@@ -16,24 +16,28 @@
         <textarea id="description" name="description" placeholder="Briefly describe your plan" required></textarea>
       </div>
 
-      <div class="form-group">
-        <label for="price"><i class="fas fa-dollar-sign me-2"></i>Price (USD)</label>
-        <input type="number" id="price" name="price" placeholder="Enter price" min="0" required />
+      <div class="form-row">
+        <div class="form-group">
+          <label for="price"><i class="fas fa-dollar-sign me-2"></i>Price (USD)</label>
+          <input type="number" id="price" name="price" placeholder="Enter price" min="0" required />
+        </div>
+
+        <div class="form-group">
+          <label for="location"><i class="fas fa-map-marker-alt me-2"></i>Location</label>
+          <input type="text" id="location" name="location" placeholder="City, Region" required />
+        </div>
       </div>
 
-      <div class="form-group">
-        <label for="location"><i class="fas fa-map-marker-alt me-2"></i>Location</label>
-        <input type="text" id="location" name="location" placeholder="City, Region" required />
-      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="country"><i class="fas fa-globe me-2"></i>Country</label>
+          <input type="text" id="country" name="country" placeholder="E.g., France" required />
+        </div>
 
-      <div class="form-group">
-        <label for="country"><i class="fas fa-globe me-2"></i>Country</label>
-        <input type="text" id="country" name="country" placeholder="E.g., France" required />
-      </div>
-
-      <div class="form-group">
-        <label for="imageFile"><i class="fas fa-upload me-2"></i>Or Upload Image File</label>
-        <input type="file" id="imageFile" name="imageFile" accept="image/*" />
+        <div class="form-group">
+          <label for="imageFile"><i class="fas fa-upload me-2"></i>Upload Image</label>
+          <input type="file" id="imageFile" name="imageFile" accept="image/*" />
+        </div>
       </div>
 
       <button type="submit" class="submit-btn">
@@ -45,90 +49,111 @@
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(to right, #d0e8f2, #f3f8fd);
+      background: linear-gradient(120deg, #d0e8f2, #f3f8fd);
       margin: 0;
       padding: 2rem 1rem;
     }
 
     .form-container {
-      max-width: 700px;
+      max-width: 750px;
       margin: 2rem auto;
-      background: rgba(255, 255, 255, 0.85);
+      background: rgba(255, 255, 255, 0.9);
       backdrop-filter: blur(12px);
-      border-radius: 16px;
-      padding: 2.5rem 2.5rem;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      border-radius: 20px;
+      padding: 3rem 2.5rem;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .form-container:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.2);
     }
 
     .form-title {
       text-align: center;
-      font-size: 2rem;
+      font-size: 2.2rem;
       font-weight: 700;
-      margin-bottom: 2rem;
+      margin-bottom: 2.5rem;
       color: #0077cc;
+      letter-spacing: 0.5px;
     }
 
     .listing-form {
       display: flex;
       flex-direction: column;
+      gap: 1.8rem;
+    }
+
+    .form-row {
+      display: flex;
       gap: 1.5rem;
+      flex-wrap: wrap;
     }
 
     .form-group {
       display: flex;
       flex-direction: column;
+      flex: 1;
     }
 
     label {
       font-weight: 600;
       color: #333;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.6rem;
+      font-size: 0.95rem;
     }
 
     input[type="text"],
     input[type="number"],
     input[type="file"],
     textarea {
-      padding: 0.75rem 1rem;
-      border-radius: 10px;
+      padding: 0.85rem 1.2rem;
+      border-radius: 12px;
       border: 2px solid #d0d0d0;
       font-size: 1rem;
       transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      background-color: #fdfdfd;
     }
 
     input:focus,
     textarea:focus {
       border-color: #007bff;
-      box-shadow: 0 0 0 0.1rem rgba(0, 123, 255, 0.25);
+      box-shadow: 0 0 0 0.15rem rgba(0, 123, 255, 0.25);
       outline: none;
     }
 
     textarea {
       resize: vertical;
-      min-height: 120px;
+      min-height: 140px;
     }
 
     .submit-btn {
       align-self: center;
-      background-color: #007bff;
+      background: linear-gradient(90deg, #007bff, #0056b3);
       color: #fff;
-      padding: 0.9rem 2rem;
+      padding: 0.95rem 2.5rem;
       border: none;
-      border-radius: 30px;
-      font-size: 1.1rem;
-      font-weight: bold;
+      border-radius: 35px;
+      font-size: 1.15rem;
+      font-weight: 700;
       cursor: pointer;
-      transition: background-color 0.3s ease, transform 0.2s ease;
+      transition: all 0.3s ease;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     }
 
     .submit-btn:hover {
-      background-color: #0056b3;
-      transform: scale(1.05);
+      background: linear-gradient(90deg, #0056b3, #007bff);
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 12px 25px rgba(0,0,0,0.2);
     }
 
     @media (max-width: 600px) {
       .form-container {
-        padding: 1.5rem;
+        padding: 2rem 1.5rem;
+      }
+      .form-row {
+        flex-direction: column;
       }
     }
   </style>
