@@ -78,6 +78,22 @@ function isLoggedIn(req, res, next) {
   next();
 }
 
+// Ownership Check
+function isOwner(req, res, next) {
+  Listing.findById(req.params.id)
+    .then(listing => {
+      if (!listing) return res.status(404).send("Listing not found");
+      if (!listing.owner.equals(req.user._id)) {
+        return res.status(403).send("❌ You are not allowed to modify this listing");
+      }
+      next();
+    })
+    .catch(err => {
+      console.error(err);
+      res.status(500).send("Error checking ownership");
+    });
+}
+
 // Multer Setup
 const uploadsDir = path.join(__dirname, "public/uploads");
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
@@ -207,7 +223,17 @@ app.post("/listings", isLoggedIn, upload.single("imageFile"), async (req, res) =
       image.url = "https://via.placeholder.com/600x400?text=No+Image";
     }
 
-    const newListing = new Listing({ title, description, price, location, country, image });
+    // ✅ include owner
+    const newListing = new Listing({
+      title,
+      description,
+      price,
+      location,
+      country,
+      image,
+      owner: req.user._id
+    });
+
     await newListing.save();
     res.redirect("/listings");
   } catch (e) {
@@ -222,16 +248,17 @@ app.get("/listings/:id", isLoggedIn, async (req, res) => {
     .populate({
       path: "reviews",
       populate: { path: "author", select: "username" }
-    });
+    })
+    .populate("owner", "username"); // ✅ show owner username
   res.render("listings/show", { listing });
 });
 
-app.get("/listings/:id/edit", isLoggedIn, async (req, res) => {
+app.get("/listings/:id/edit", isLoggedIn, isOwner, async (req, res) => {
   const listing = await Listing.findById(req.params.id);
   res.render("listings/edit", { listing });
 });
 
-app.put("/listings/:id", isLoggedIn, upload.single("imageFile"), async (req, res) => {
+app.put("/listings/:id", isLoggedIn, isOwner, upload.single("imageFile"), async (req, res) => {
   try {
     const { title, description, price, location, country } = req.body;
     const listing = await Listing.findById(req.params.id);
@@ -255,7 +282,7 @@ app.put("/listings/:id", isLoggedIn, upload.single("imageFile"), async (req, res
   }
 });
 
-app.delete("/listings/:id", isLoggedIn, async (req, res) => {
+app.delete("/listings/:id", isLoggedIn, isOwner, async (req, res) => {
   await Listing.findByIdAndDelete(req.params.id);
   res.redirect("/listings");
 });

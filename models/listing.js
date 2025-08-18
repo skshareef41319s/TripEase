@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
+
 const listingSchema = new Schema({
   title: {
     type: String,
@@ -18,7 +19,6 @@ const listingSchema = new Schema({
     required: true,
     min: 0,
   },
-
   location: {
     type: String,
     required: true,
@@ -27,13 +27,19 @@ const listingSchema = new Schema({
     type: String,
     required: true,
   },
-
   reviews: [
     {
       type: Schema.Types.ObjectId,
       ref: "Review",
     },
   ],
+  owner: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+    required: true, // every listing must have a creator
+  },
+  
 });
+
 const Listing = mongoose.model("Listing", listingSchema);
 module.exports = Listing;
