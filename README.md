@@ -122,15 +122,3 @@ For feedback, questions, or collaborations, feel free to reach out or [open an i
 
 ---
 
-<!-- Badges Example: 
-![GitHub stars](https://img.shields.io/github/stars/skshareef41319s/TripEase?style=social)
-![GitHub forks](https://img.shields.io/github/forks/skshareef41319s/TripEase?style=social)
--->
-
----
-
-## 💼 Super Crisp Resume Project Description
-
-> **TripEase** — Full-stack travel planner using Node.js, Express, MongoDB, EJS, and Passport.js. Features destination listings, reviews, secure authentication with OTP, profile dashboards, image uploads (Cloudinary), and modern UI — built for seamless travel planning and community engagement.
-
----
