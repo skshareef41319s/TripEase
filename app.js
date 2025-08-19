@@ -9,17 +9,11 @@ const MongoStore = require("connect-mongo");
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
 const multer = require("multer");
-const fs = require("fs");
 const nodemailer = require("nodemailer");
 
-// Nodemailer Transporter Setup
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_PASS
-  }
-});
+// Cloudinary Setup
+const { storage } = require("./cloudConfig");
+const upload = multer({ storage });
 
 // Models
 const Listing = require("./models/listing");
@@ -28,11 +22,10 @@ const Booking = require("./models/booking");
 const User = require("./models/user");
 
 const app = express();
-const port = 8080;
+const port = process.env.PORT || 8080;
 
 // MongoDB Connection
 const dbUrl = process.env.ATLASDB_URL || "mongodb://127.0.0.1:27017/TripEase";
-
 mongoose.connect(dbUrl)
   .then(() => console.log("✅ MongoDB Connected"))
   .catch(err => console.error("❌ MongoDB Connection Error:", err));
@@ -54,9 +47,9 @@ app.use(session({
   saveUninitialized: false,
   store: MongoStore.create({
     mongoUrl: dbUrl,
-    ttl: 60 * 60 * 24
+    ttl: 24 * 60 * 60
   }),
-  cookie: { maxAge: 1000 * 60 * 60 * 24, httpOnly: true }
+  cookie: { maxAge: 24 * 60 * 60 * 1000, httpOnly: true }
 }));
 
 // Passport
@@ -72,39 +65,36 @@ app.use((req, res, next) => {
   next();
 });
 
-// Auth Check
-function isLoggedIn(req, res, next) {
+// Nodemailer Transporter
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_PASS
+  }
+});
+
+// Auth & Ownership Middlewares
+const isLoggedIn = (req, res, next) => {
   if (!req.isAuthenticated()) return res.redirect("/login");
   next();
-}
+};
 
-// Ownership Check
-function isOwner(req, res, next) {
-  Listing.findById(req.params.id)
-    .then(listing => {
-      if (!listing) return res.status(404).send("Listing not found");
-      if (!listing.owner.equals(req.user._id)) {
-        return res.status(403).send("❌ You are not allowed to modify this listing");
-      }
-      next();
-    })
-    .catch(err => {
-      console.error(err);
-      res.status(500).send("Error checking ownership");
-    });
-}
+const isOwner = async (req, res, next) => {
+  try {
+    const listing = await Listing.findById(req.params.id);
+    if (!listing) return res.status(404).send("Listing not found");
+    if (!listing.owner.equals(req.user._id)) return res.status(403).send("❌ Not allowed");
+    next();
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error checking ownership");
+  }
+};
 
-// Multer Setup
-const uploadsDir = path.join(__dirname, "public/uploads");
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+// Routes
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, "public/uploads"),
-  filename: (req, file, cb) => cb(null, Date.now() + "-" + file.originalname)
-});
-const upload = multer({ storage });
-
-// Intro & Auth
+// Intro & Home
 app.get("/", (req, res) => {
   if (!req.session.introShown) {
     req.session.introShown = true;
@@ -119,9 +109,10 @@ app.get("/intro", (req, res) => {
   res.render("auth/intro");
 });
 
-app.get("/register", (req, res) => {
-  res.render("auth/register", { error: null });
-});
+app.get("/home", isLoggedIn, (req, res) => res.render("listings/home"));
+
+// Auth Routes
+app.get("/register", (req, res) => res.render("auth/register", { error: null }));
 
 app.post("/register", async (req, res) => {
   try {
@@ -145,9 +136,7 @@ app.post("/register", async (req, res) => {
   }
 });
 
-app.get("/verify-otp", (req, res) => {
-  res.render("auth/verifyOtp", { error: null });
-});
+app.get("/verify-otp", (req, res) => res.render("auth/verifyOtp", { error: null }));
 
 app.post("/verify-otp", async (req, res) => {
   const { enteredOtp } = req.body;
@@ -200,9 +189,6 @@ app.get("/logout", (req, res) => {
   });
 });
 
-// Pages
-app.get("/home", isLoggedIn, (req, res) => res.render("listings/home"));
-
 // Listings CRUD
 app.get("/listings", isLoggedIn, async (req, res) => {
   const allListings = await Listing.find();
@@ -214,42 +200,22 @@ app.get("/listings/new", isLoggedIn, (req, res) => res.render("listings/new"));
 app.post("/listings", isLoggedIn, upload.single("imageFile"), async (req, res) => {
   try {
     const { title, description, price, location, country } = req.body;
+    let image = req.file ? { filename: req.file.originalname, url: req.file.path } 
+                         : { filename: "", url: "https://via.placeholder.com/600x400?text=No+Image" };
 
-    let image = { filename: "", url: "" };
-    if (req.file) {
-      image.filename = req.file.filename;
-      image.url = `/uploads/${req.file.filename}`;
-    } else {
-      image.url = "https://via.placeholder.com/600x400?text=No+Image";
-    }
-
-    // ✅ include owner
-    const newListing = new Listing({
-      title,
-      description,
-      price,
-      location,
-      country,
-      image,
-      owner: req.user._id
-    });
-
+    const newListing = new Listing({ title, description, price, location, country, image, owner: req.user._id });
     await newListing.save();
     res.redirect("/listings");
   } catch (e) {
-    console.error("❌ Listing creation failed:", e);
+    console.error(e);
     res.status(500).send("Something went wrong.");
   }
 });
 
-// SHOW listing with reviews and author populated
 app.get("/listings/:id", isLoggedIn, async (req, res) => {
   const listing = await Listing.findById(req.params.id)
-    .populate({
-      path: "reviews",
-      populate: { path: "author", select: "username" }
-    })
-    .populate("owner", "username"); // ✅ show owner username
+    .populate({ path: "reviews", populate: { path: "author", select: "username" } })
+    .populate("owner", "username");
   res.render("listings/show", { listing });
 });
 
@@ -260,24 +226,18 @@ app.get("/listings/:id/edit", isLoggedIn, isOwner, async (req, res) => {
 
 app.put("/listings/:id", isLoggedIn, isOwner, upload.single("imageFile"), async (req, res) => {
   try {
-    const { title, description, price, location, country } = req.body;
     const listing = await Listing.findById(req.params.id);
+    const { title, description, price, location, country } = req.body;
 
     if (req.file) {
-      listing.image.filename = req.file.filename;
-      listing.image.url = `/uploads/${req.file.filename}`;
+      listing.image = { filename: req.file.originalname, url: req.file.path };
     }
 
-    listing.title = title;
-    listing.description = description;
-    listing.price = price;
-    listing.location = location;
-    listing.country = country;
-
+    Object.assign(listing, { title, description, price, location, country });
     await listing.save();
     res.redirect(`/listings/${listing._id}`);
   } catch (err) {
-    console.error("❌ Update failed:", err);
+    console.error(err);
     res.status(500).send("Update failed");
   }
 });
@@ -291,7 +251,7 @@ app.delete("/listings/:id", isLoggedIn, isOwner, async (req, res) => {
 app.post("/listings/:id/reviews", isLoggedIn, async (req, res) => {
   const listing = await Listing.findById(req.params.id);
   const review = new Review(req.body.review);
-  review.author = req.user._id;   // link author
+  review.author = req.user._id;
   await review.save();
   listing.reviews.push(review);
   await listing.save();
@@ -300,9 +260,7 @@ app.post("/listings/:id/reviews", isLoggedIn, async (req, res) => {
 
 app.delete("/listings/:listingId/reviews/:reviewId", isLoggedIn, async (req, res) => {
   const review = await Review.findById(req.params.reviewId);
-  if (!review.author.equals(req.user._id)) {
-    return res.status(403).send("❌ You cannot delete this review");
-  }
+  if (!review.author.equals(req.user._id)) return res.status(403).send("❌ Not allowed");
   await Listing.findByIdAndUpdate(req.params.listingId, { $pull: { reviews: req.params.reviewId } });
   await Review.findByIdAndDelete(req.params.reviewId);
   res.redirect(`/listings/${req.params.listingId}`);
@@ -310,18 +268,15 @@ app.delete("/listings/:listingId/reviews/:reviewId", isLoggedIn, async (req, res
 
 // Likes
 app.post("/listings/:id/like", isLoggedIn, async (req, res) => {
-  const { id } = req.params;
-  if (!req.user.likedListings.includes(id)) {
-    req.user.likedListings.push(id);
+  if (!req.user.likedListings.includes(req.params.id)) {
+    req.user.likedListings.push(req.params.id);
     await req.user.save();
   }
-  res.redirect(`/listings/${id}`);
+  res.redirect(`/listings/${req.params.id}`);
 });
 
 app.post("/listings/:id/unlike", isLoggedIn, async (req, res) => {
-  req.user.likedListings = req.user.likedListings.filter(
-    listingId => listingId.toString() !== req.params.id
-  );
+  req.user.likedListings = req.user.likedListings.filter(id => id.toString() !== req.params.id);
   await req.user.save();
   res.redirect(`/listings/${req.params.id}`);
 });
@@ -330,22 +285,16 @@ app.post("/listings/:id/unlike", isLoggedIn, async (req, res) => {
 app.post("/listings/:id/book", isLoggedIn, async (req, res) => {
   const listing = await Listing.findById(req.params.id);
   const { date, guests } = req.body;
-
-  const booking = new Booking({
-    user: req.user._id,
-    listing: listing._id,
-    date,
-    guests
-  });
-
+  const booking = new Booking({ user: req.user._id, listing: listing._id, date, guests });
   await booking.save();
   req.user.bookings.push(booking._id);
   await req.user.save();
   res.redirect("/profile");
 });
 
+// Search
 app.get("/search", isLoggedIn, async (req, res) => {
-  const query = req.query.q.trim();
+  const query = req.query.q?.trim() || "";
   const listings = await Listing.find({
     $or: [
       { title: { $regex: query, $options: "i" } },
@@ -353,10 +302,37 @@ app.get("/search", isLoggedIn, async (req, res) => {
       { country: { $regex: query, $options: "i" } }
     ]
   });
-
   if (listings.length === 1) return res.redirect(`/listings/${listings[0]._id}`);
-  else return res.render("listings/searchResults", { listings, query });
+  res.render("listings/searchResults", { listings, query });
 });
+
+
+// Contact Page
+app.get("/contact", (req, res) => {
+  res.render("pages/contact");
+});
+
+// Handle Contact Form Submission
+app.post("/contact", async (req, res) => {
+  const { name, email, message } = req.body;
+
+  try {
+    await transporter.sendMail({
+      from: process.env.GMAIL_USER,
+      to: process.env.GMAIL_USER, // or any admin email
+      subject: `TripEase Contact Form Message from ${name}`,
+      text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
+    });
+
+    // Render success page
+    res.render("pages/contactSuccess", { name });
+  } catch (err) {
+    console.error("Contact form error:", err);
+    res.render("pages/contact", { error: "Failed to send message. Please try again." });
+  }
+});
+
+
 
 // Profile
 app.get("/profile", isLoggedIn, async (req, res) => {
@@ -366,26 +342,20 @@ app.get("/profile", isLoggedIn, async (req, res) => {
       .populate({ path: "bookings", populate: { path: "listing" } });
 
     res.render("listings/profile", {
-      user: {
-        name: user.username,
-        email: user.email,
-        listings: user.likedListings,
-        bookings: user.bookings
-      }
+      user: { name: user.username, email: user.email, listings: user.likedListings, bookings: user.bookings }
     });
   } catch (err) {
-    console.error("❌ Error loading profile:", err);
+    console.error(err);
     res.status(500).send("Error loading profile");
   }
 });
 
 // Cancel Booking
 app.delete("/bookings/:id", isLoggedIn, async (req, res) => {
-  const bookingId = req.params.id;
-  await User.findByIdAndUpdate(req.user._id, { $pull: { bookings: bookingId } });
-  await Booking.findByIdAndDelete(bookingId);
+  await User.findByIdAndUpdate(req.user._id, { $pull: { bookings: req.params.id } });
+  await Booking.findByIdAndDelete(req.params.id);
   res.redirect("/profile");
 });
 
-// Start server
+// Start Server
 app.listen(port, () => console.log(`🚀 Server running at http://localhost:${port}`));

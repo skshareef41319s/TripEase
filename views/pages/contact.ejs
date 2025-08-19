@@ -1,0 +1,66 @@
+<% layout("/layouts/boilerplate") %>
+
+<section class="contact-section py-5" style="background: linear-gradient(135deg, #f0f4ff, #d9e4ff);">
+  <div class="container" style="max-width: 700px;">
+
+    <h1 class="text-center mb-4 fw-bold" style="color:#333;">Get in Touch</h1>
+    <p class="text-center mb-5 text-muted">Questions, feedback, or suggestions? We’d love to hear from you!</p>
+
+    <% if (typeof success !== 'undefined') { %>
+      <div class="alert alert-success text-center shadow-sm rounded"><%= success %></div>
+    <% } %>
+    <% if (typeof error !== 'undefined') { %>
+      <div class="alert alert-danger text-center shadow-sm rounded"><%= error %></div>
+    <% } %>
+
+    <form action="/contact" method="POST" class="bg-white p-4 p-md-5 rounded-4 shadow contact-form" style="transition: transform 0.3s ease;">
+      
+      <div class="form-floating mb-4">
+        <input type="text" class="form-control" id="name" name="name" placeholder="Your Name" required>
+        <label for="name">Name</label>
+      </div>
+
+      <div class="form-floating mb-4">
+        <input type="email" class="form-control" id="email" name="email" placeholder="you@example.com" required>
+        <label for="email">Email</label>
+      </div>
+
+      <div class="form-floating mb-4">
+        <textarea class="form-control" id="message" name="message" placeholder="Write your message here..." style="height:150px;" required></textarea>
+        <label for="message">Message</label>
+      </div>
+
+      <button type="submit" class="btn w-100 fw-bold text-white py-3" 
+              style="background: linear-gradient(90deg, #007bff, #6B86FF); border-radius: 12px; font-size:1.1rem; transition: transform 0.2s ease;">
+        Send Message
+      </button>
+    </form>
+  </div>
+</section>
+
+<style>
+  /* Hover lift effect for form */
+  .contact-form:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+  }
+
+  /* Input focus glow */
+  .contact-form .form-control:focus {
+    border-color: #6B86FF;
+    box-shadow: 0 0 8px rgba(107,134,255,0.3);
+  }
+
+  /* Smooth label transition for floating inputs */
+  .form-floating>.form-control:focus~label,
+  .form-floating>.form-control:not(:placeholder-shown)~label {
+    color: #6B86FF;
+    font-weight:600;
+  }
+</style>
+
+<script>
+  const btn = document.querySelector('button[type="submit"]');
+  btn.addEventListener('mouseenter', () => btn.style.transform = 'scale(1.05)');
+  btn.addEventListener('mouseleave', () => btn.style.transform = 'scale(1)');
+</script>
