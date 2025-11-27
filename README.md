@@ -111,7 +111,6 @@ Contributions are welcome. Suggested workflow:
 3. Commit changes with clear messages
 4. Push and open a pull request describing the changes and rationale
 
-When submitting PRs, include tests or manual verification steps for features that affect authentication, listings, or payments.
 
 ## Author & contact
 
